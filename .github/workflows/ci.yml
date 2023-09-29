@@ -23,17 +23,17 @@ jobs:
         run: docker-compose up -d
 
       - name: Copy .env.example to .env
-        run: docker-compose exec -T -u python app cp .env.example .env
+        run: docker-compose exec -T -u root app cp .env.example .env
 
       - name: Install dependencies
-        run: docker-compose exec -T -u python app poetry install --no-interaction --no-ansi
+        run: docker-compose exec -T -u root app poetry install --no-interaction --no-ansi
 
       - name: Activate virtual environment and run Django tests
         run: |
           docker-compose exec -T app bash -c "source .venv/bin/activate && python manage.py test"
       
-      # - name: Fix Ruff cache permissions
-      #   run: chmod -R 777 /home/python/app/.ruff_cache
+      - name: Fix Ruff cache permissions
+        run: docker-compose exec -T app bash -c "chmod -R 777 /home/python/app/.ruff_cache"
 
       - name: Run tests and post lint and coverage
         run: |
