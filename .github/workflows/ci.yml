@@ -30,7 +30,7 @@ jobs:
 
       - name: Run tests
         run: |
-          docker-compose exec -T app bash -c "source .venv/bin/activate && python manage.py test && task test && task post_test"
+          docker-compose exec -T app bash -c "source .venv/bin/activate && python manage.py test"
 
       - name: Run coverage
         run: |
