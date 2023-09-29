@@ -94,7 +94,7 @@ class ProfileModelTest(TestCase):
         self.assertFalse(cpf_cnpj_field.blank)
         self.assertIsNone(cpf_cnpj_field.db_column)
         self.assertTrue(cpf_cnpj_field.editable)
-        self.assertEqual(cpf_cnpj_field.max_length, 14)
+        self.assertEqual(cpf_cnpj_field.max_length, 18)
 
 
 class AddressModelTest(TestCase):
@@ -260,4 +260,4 @@ class AddressModelTest(TestCase):
         self.assertFalse(zip_code_field.blank)
         self.assertIsNone(zip_code_field.db_column)
         self.assertTrue(zip_code_field.editable)
-        self.assertEqual(zip_code_field.max_length, 8)
+        self.assertEqual(zip_code_field.max_length, 9)

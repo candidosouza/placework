@@ -20,7 +20,7 @@ class Profile(models.Model):
         verbose_name='Tipo de conta',
     )
     is_active = models.BooleanField(default=True, verbose_name='Ativo')
-    cpf_cnpj = models.CharField(max_length=14, verbose_name='CPF/CNPJ')
+    cpf_cnpj = models.CharField(max_length=18, verbose_name='CPF/CNPJ')
 
     def __str__(self):
         return f'{self.user.username} - {self.cpf_cnpj}'
@@ -43,7 +43,7 @@ class Address(models.Model):
     city = models.CharField(max_length=255, verbose_name='Cidade')
     state = models.CharField(max_length=2, verbose_name='Estado')
     country = models.CharField(max_length=255, verbose_name='País')
-    zip_code = models.CharField(max_length=8, verbose_name='CEP')
+    zip_code = models.CharField(max_length=9, verbose_name='CEP')
 
     def __str__(self):
         return f'{self.street}, {self.number}, {self.city}, {self.state}'
