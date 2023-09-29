@@ -31,13 +31,10 @@ jobs:
       - name: Activate virtual environment and run Django tests
         run: |
           docker-compose exec -T app bash -c "source .venv/bin/activate && python manage.py test"
-      
-      - name: Fix Ruff cache permissions
-        run: docker-compose exec -T app bash -c "chmod -R 777 .ruff_cache"
 
       - name: Run tests and post lint and coverage
         run: |
-          docker-compose exec -T app bash -c "source .venv/bin/activate && task test && task post_lint"
+          docker-compose exec -T app bash -c "source .venv/bin/activate && task test && chmod -R 777 .ruff_cache && task post_lint"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
