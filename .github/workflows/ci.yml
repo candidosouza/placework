@@ -33,7 +33,7 @@ jobs:
           docker-compose exec -T app bash -c "source .venv/bin/activate && python manage.py test"
       
       - name: Fix Ruff cache permissions
-        run: docker-compose exec -T app bash -c "chmod -R 777 /home/python/app/.ruff_cache"
+        run: docker-compose exec -T app bash -c "chmod -R 777 .ruff_cache"
 
       - name: Run tests and post lint and coverage
         run: |
