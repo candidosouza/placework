@@ -1,0 +1,68 @@
+name: PlaceWork CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+
+  tests:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup python '3.10'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+
+      - name: Run Docker Compose
+        run: docker-compose up -d
+
+      - name: Copy .env.example to .env
+        run: docker-compose exec -T -u root app cp .env.example .env
+
+      - name: Install dependencies
+        run: docker-compose exec -T -u root app poetry install --no-interaction --no-ansi
+
+      - name: Activate virtual environment and run Django tests
+        run: |
+          docker-compose exec -T app bash -c "source .venv/bin/activate && python manage.py test"
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Teardown Docker Compose
+        if: always()
+        run: docker-compose down
+
+
+  dockerHub:
+    needs: tests
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Docker Build
+        uses: docker/setup-buildx-action@v2.10.0
+
+      - name: Docker Login
+        uses: docker/login-action@v2.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v4.1.1
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/placework:latest

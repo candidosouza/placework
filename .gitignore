@@ -1,0 +1,7 @@
+.docker/postgres/pgdata
+logs
+node_modules
+.venv
+.ruff_cache
+.pytest_cache
+htmlcov

@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "PlaceWork"
+version = "0.0.1"
+description = "PlaceWork - Free Workspaces"
+authors = ["candidosouza <candidosouzza@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.10.*"
+django = "^4.2.5"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+pytest-cov = "^4.1.0"
+taskipy = "^1.12.0"
+blue = "^0.9.1"
+ruff = "^0.0.291"
+httpx = "^0.25.0"
+isort = "^5.12.0"
+
+[tool.ruff]
+line-length = 79
+exclude = ['.venv', 'node_modules', '.docker', 'setup']
+
+[tool.isort]
+profile = "black"
+line_length = 79
+# known_first_party = "placework"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+
+[tool.taskipy.tasks]
+lint = 'ruff . && blue --check . --diff'
+format = 'blue .  && isort .'
+run = 'python manage.py runserver 0.0.0.0:8000'
+pre_test = 'task lint'
+test = 'pytest -s -x --cov=placework -vv'
+post_test = 'coverage xml && coverage html'

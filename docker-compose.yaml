@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  app:
+    build: .
+    container_name: app
+    command: ./.docker/entrypoint.sh
+    tty: true
+    volumes:
+      - .:/home/python/app
+      - ./logs:/logs
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    networks:
+      - placework-network
+
+  db:
+    build: .docker/postgres
+    container_name: db
+    tty: true
+    volumes:
+      - .docker/postgres/pgdata:/var/lib/postgresql/data
+    environment:
+      - LC_ALL=pt_BR.UTF-8
+      - POSTGRES_DB=placework
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+    ports:
+      - "5432:5432"
+    networks:
+      - placework-network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    tty: true
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@user.com
+      - PGADMIN_DEFAULT_PASSWORD=123456
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - placework-network
+  
+networks:
+  placework-network:
+    driver: bridge
