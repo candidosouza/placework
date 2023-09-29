@@ -32,6 +32,10 @@ jobs:
         run: |
           docker-compose exec -T app bash -c "source .venv/bin/activate && python manage.py test"
 
+      - name: Verify ruff folder
+        run: |
+          docker-compose exec -T app bash -c "source .venv/bin/activate && task test && ls -la"
+
       - name: Run tests and post lint and coverage
         run: |
           docker-compose exec -T app bash -c "source .venv/bin/activate && task test && chmod -R 777 .ruff_cache && task post_lint"
