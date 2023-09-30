@@ -1,8 +1,9 @@
 const mix = require('laravel-mix');
 
-mix.js(['', ''], '')
-    .sass('', '')
-    .copyDirectory('', '');
+mix.sass('./placework/resources/styles/main.scss', './placework/static/css')
+    .ts('./placework/resources/scripts/main.ts', './placework/static/js');
+    // .js('./placework/static/js/main.js', './placework/static/js');
+    // .copyDirectory('', '');
 
 mix.setPublicPath('');
 mix.options({

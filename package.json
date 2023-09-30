@@ -5,7 +5,9 @@
   "devDependencies": {
     "resolve-url-loader": "^5.0.0",
     "sass": "^1.68.0",
-    "sass-loader": "^13.3.2"
+    "sass-loader": "^13.3.2",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.2.2"
   },
   "dependencies": {
     "laravel-mix": "^6.0.49"

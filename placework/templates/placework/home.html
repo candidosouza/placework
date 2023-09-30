@@ -1,0 +1,52 @@
+{% extends 'layouts/layout.html' %}
+
+{% block content %}
+  {% if request.user.is_authenticated %}
+    <div class="jumbotron">
+      {% if request.user.user_profile.account_type == 'PJ' %}
+        <p>EMPRESA: {{ request.user.get_full_name }}</p>
+      {% else %}
+        <p>PROFISSIONAL: {{ request.user.get_full_name }}</p>
+      {% endif %}
+      <hr class="my-4" />
+      
+      {% if messages %}
+          {% for message in messages %}
+          <p class="lead {% if message.tags %}text-{{ message.tags }}"{% endif %}>{{ message }}</p>
+          {% endfor %}
+      {% endif %}
+
+      <h1 class="display-4">Olá, {{ request.user.get_full_name }}!</h1>
+      <p class="lead">A WORKPLACE É UMA STARTUP QUE BUSCA APROXIMAR EMPRESAS E TRABALHADORES REMOTOS.</p>
+      <hr class="my-4" />
+      <p>Fomos Criados para gerar sinergia entre empresas e nômandes digitais</p>
+
+      {% if request.user.user_profile.account_type == 'PJ' %}
+        <a class="btn btn-info btn-lg" href="{% url 'add_address' request.user.pk %}" role="button">Adicionar novo Endereço</a>
+      {% endif %}
+
+      <a class="btn btn-primary btn-lg" href="{% url 'update' request.user.pk %}" role="button">Alterar dados</a>
+      <a class="btn btn-danger btn-lg" href="{% url 'logout' %}" role="button">Sair</a>
+
+      <hr class="my-4" />
+      <p class="lead">Endereço{% if request.user.user_adress.count > 1 %}s{% endif %} Cadastrado</p>
+
+      {% for address in request.user.user_adress.all %}
+        <p class="lead text-info">{{ address }}</p>
+      {% endfor %}
+
+    </div>
+
+
+  {% else %}
+    <div class="jumbotron">
+      <h1 class="display-4">Olá, Bem vindo ao PlaceWork!</h1>
+      <p class="lead">A WORKPLACE É UMA STARTUP QUE BUSCA APROXIMAR EMPRESAS E TRABALHADORES REMOTOS.</p>
+      <hr class="my-4" />
+      <p>Fomos Criados para gerar sinergia entre empresas e nômandes digitais</p>
+
+      <a class="btn btn-success btn-lg" href="{% url 'login' %}" role="button">Logar no sistema</a>
+      <a class="btn btn-primary btn-lg" href="{% url 'register' %}" role="button">Cadastrar</a>
+    </div>
+  {% endif %}
+{% endblock %}
