@@ -1,0 +1,24 @@
+.main {
+    min-height: calc(100vh - 80px);
+    padding: 30px 0;
+
+    .jumbotron {
+        padding: 30px;
+    }
+
+    .text-error {
+        color: #c41627;
+    }
+
+    .text-success {
+        color: #0bc048;
+    }
+
+    .text-info {
+        color: #0c5460;
+    }
+
+    .text-warning {
+        color: #856404;
+    }
+}

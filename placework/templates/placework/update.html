@@ -1,0 +1,48 @@
+{% extends 'layouts/layout.html' %}
+
+{% block content %}
+  <div class="jumbotron">
+    {% if request.user.user_profile.account_type == 'PJ' %}
+      <p>EMPRESA: {{ request.user.get_full_name }}</p>
+    {% else %}
+      <p>PROFISSIONAL: {{ request.user.get_full_name }}</p>
+    {% endif %}
+    <hr class="my-4" />
+    <h1 class="display-4">Olá, {{ request.user.get_full_name }}!</h1>
+    <p class="lead">Fomos Criados para gerar sinergia entre empresas e nômandes digitais</p>
+    <hr class="my-4" />
+    <p class="lead">ALTERAR DADOS CADASTRAIS</p>
+
+    <form class="user-form" method="post">
+        {% csrf_token %}
+
+        {% if messages %}
+            {% for message in messages %}
+            <p class="lead {% if message.tags %}text-{{ message.tags }}"{% endif %}>{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+        
+        {% for field in form.visible_fields %}
+        <div class="form-group">
+            {% for error in field.errors %}
+                <p class="text-danger">{{ error }}</p>
+            {% endfor %}
+
+            <label for="{{ field.id_for_label }}">{{ field.label_tag }}</label>
+            {{ field }}
+            {% if field.help_text %}
+            <small class="form-text text-muted">{{ field.help_text }}</small>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <button class="btn btn-primary btn-lg" type="submit">Alterar</button>
+      
+    </form>
+
+    <p class="link">
+      <a href="{% url 'home' %}">Voltar para a página inicial</a>
+    </p>
+  </div>
+{% endblock %}
+
