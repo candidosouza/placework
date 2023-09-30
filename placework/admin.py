@@ -25,7 +25,9 @@ class UserAdmin(BaseUserAdmin):
         'first_name',
         'last_name',
         'email',
-        'user_profile__cpf_cnpj',
+        'user_profile__cpf',
+        'user_profile__cnpj',
+        'user_profile__company_name',
     )
     list_filter = (
         'user_profile__account_type',
@@ -33,15 +35,19 @@ class UserAdmin(BaseUserAdmin):
     )
 
     def name(self, obj):
+        if company_name := obj.user_profile.company_name:
+            return company_name
         return f'{obj.first_name} {obj.last_name}'
 
     def accout_type(self, obj):
         return obj.user_profile.account_type
 
     def cpf_cnpj(self, obj):
-        return obj.user_profile.cpf_cnpj
+        if obj.user_profile.account_type == 'PF':
+            return obj.user_profile.cpf
+        return obj.user_profile.cnpj
 
-    name.short_description = 'Nome'
+    name.short_description = 'Nome / Razão Social'
     accout_type.short_description = 'Tipo de conta'
     cpf_cnpj.short_description = 'CPF/CNPJ'
 

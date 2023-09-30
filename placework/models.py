@@ -1,5 +1,7 @@
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
+from validate_docbr import CPF, CNPJ
 
 
 class Profile(models.Model):
@@ -7,6 +9,7 @@ class Profile(models.Model):
         ('PF', 'PF'),
         ('PJ', 'PJ'),
     )
+
     user = models.OneToOneField(
         User,
         unique=True,
@@ -20,11 +23,24 @@ class Profile(models.Model):
         verbose_name='Tipo de conta',
     )
     is_active = models.BooleanField(default=True, verbose_name='Ativo')
-    cpf_cnpj = models.CharField(max_length=18, verbose_name='CPF/CNPJ')
+    company_name = models.CharField(max_length=255, verbose_name='Nome da empresa', blank=True)
+    cpf = models.CharField(max_length=14, verbose_name='CPF', blank=True, null=True, unique=True)
+    cnpj = models.CharField(max_length=18, verbose_name='CNPJ', blank=True, null=True, unique=True)
 
     def __str__(self):
-        return f'{self.user.username} - {self.cpf_cnpj}'
+        return f'{self.user.username}'
 
+    def clean(self):
+        if self.cpf:
+            cpf_validator = CPF()
+            if not cpf_validator.validate(self.cpf):
+                raise ValidationError({'cpf': 'CPF inválido.'})
+
+        if self.cnpj:
+            cnpj_validator = CNPJ()
+            if not cnpj_validator.validate(self.cnpj):
+                raise ValidationError({'cnpj': 'CNPJ inválido.'})
+    
     class Meta:
         verbose_name = 'Perfil'
         verbose_name_plural = 'Perfis'
@@ -42,7 +58,6 @@ class Address(models.Model):
     neighborhood = models.CharField(max_length=255, verbose_name='Bairro')
     city = models.CharField(max_length=255, verbose_name='Cidade')
     state = models.CharField(max_length=2, verbose_name='Estado')
-    country = models.CharField(max_length=255, verbose_name='País')
     zip_code = models.CharField(max_length=9, verbose_name='CEP')
 
     def __str__(self):
