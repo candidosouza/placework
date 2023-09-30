@@ -18,7 +18,7 @@ class AdminTest(TestCase):
 
         # Crie um perfil de exemplo
         self.profile = Profile.objects.create(
-            user=self.user, account_type='PF', cpf_cnpj='12345678901'
+            user=self.user, account_type='PF', cpf='12345678901'
         )
 
         # Crie um endereço de exemplo
@@ -30,7 +30,6 @@ class AdminTest(TestCase):
             neighborhood='Downtown',
             city='Exampleville',
             state='EX',
-            country='US',
             zip_code='12345',
         )
 
@@ -39,7 +38,7 @@ class AdminTest(TestCase):
         self.client.login(username='testuser', password='testpassword')
 
         # Acesse a página de alteração de usuário
-        response = self.client.get(f'/admin/auth/user/{self.user.id}/change/')
+        response = self.client.get(f'/admin-placework/auth/user/{self.user.id}/change/')
 
         # Verifique se a resposta é bem-sucedida
         self.assertEqual(response.status_code, 200)
@@ -49,14 +48,14 @@ class AdminTest(TestCase):
         self.assertContains(response, 'Endereço')
 
         # Verifique se os campos de perfil e endereço estão presentes
-        self.assertContains(response, 'CPF/CNPJ')
+        self.assertContains(response, 'CPF')
+        self.assertContains(response, 'CNPJ')
         self.assertContains(response, 'Rua')
         self.assertContains(response, 'Número')
         self.assertContains(response, 'Complemento')
         self.assertContains(response, 'Bairro')
         self.assertContains(response, 'Cidade')
         self.assertContains(response, 'Estado')
-        self.assertContains(response, 'País')
         self.assertContains(response, 'CEP')
 
     def test_user_admin_search(self):
@@ -64,7 +63,7 @@ class AdminTest(TestCase):
         self.client.login(username='testuser', password='testpassword')
 
         # Pesquise por um usuário com base no nome do perfil
-        response = self.client.get('/admin/auth/user/', {'q': 'John Doe'})
+        response = self.client.get('/admin-placework/auth/user/', {'q': 'John Doe'})
 
         # Verifique se a resposta é bem-sucedida
         self.assertEqual(response.status_code, 200)

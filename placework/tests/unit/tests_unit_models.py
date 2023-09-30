@@ -13,7 +13,7 @@ class ProfileModelTest(TestCase):
         Profile.objects.create(
             user=self.user,
             account_type='PF',
-            cpf_cnpj='12345678901',
+            cpf='12345678901',
         )
 
     def test_user_label(self):
@@ -31,10 +31,15 @@ class ProfileModelTest(TestCase):
         field_label = profile._meta.get_field('is_active').verbose_name
         self.assertEqual(field_label, 'Ativo')
 
-    def test_cpf_cnpj_label(self):
+    def test_cpf_label(self):
         profile = Profile.objects.get(user=self.user)
-        field_label = profile._meta.get_field('cpf_cnpj').verbose_name
-        self.assertEqual(field_label, 'CPF/CNPJ')
+        field_label = profile._meta.get_field('cpf').verbose_name
+        self.assertEqual(field_label, 'CPF')
+    
+    def test_cnpj_label(self):
+        profile = Profile.objects.get(user=self.user)
+        field_label = profile._meta.get_field('cnpj').verbose_name
+        self.assertEqual(field_label, 'CNPJ')
 
     def test_account_type_choices(self):
         profile = Profile.objects.get(user=self.user)
@@ -48,7 +53,7 @@ class ProfileModelTest(TestCase):
 
     def test_profile_str_method(self):
         profile = Profile.objects.get(user=self.user)
-        expected_str = f'{profile.user.username} - {profile.cpf_cnpj}'
+        expected_str = f'{profile.user.username}'
         self.assertEqual(str(profile), expected_str)
 
     def test_class__meta__(self):
@@ -65,7 +70,7 @@ class ProfileModelTest(TestCase):
         fields_name = tuple(field.name for field in Profile._meta.fields)
         self.assertEqual(
             fields_name,
-            ('id', 'user', 'account_type', 'is_active', 'cpf_cnpj'),
+            ('id', 'user', 'account_type', 'is_active', 'company_name', 'cpf', 'cnpj'),
         )
 
         user_field: models.ForeignKey = Profile.user.field
@@ -88,13 +93,21 @@ class ProfileModelTest(TestCase):
         self.assertIsNone(is_active_field.db_column)
         self.assertTrue(is_active_field.editable)
 
-        cpf_cnpj_field: models.CharField = Profile.cpf_cnpj.field
-        self.assertIsInstance(cpf_cnpj_field, models.CharField)
-        self.assertFalse(cpf_cnpj_field.null)
-        self.assertFalse(cpf_cnpj_field.blank)
-        self.assertIsNone(cpf_cnpj_field.db_column)
-        self.assertTrue(cpf_cnpj_field.editable)
-        self.assertEqual(cpf_cnpj_field.max_length, 18)
+        cpf_field: models.CharField = Profile.cpf.field
+        self.assertIsInstance(cpf_field, models.CharField)
+        self.assertTrue(cpf_field.null)
+        self.assertTrue(cpf_field.blank)
+        self.assertIsNone(cpf_field.db_column)
+        self.assertTrue(cpf_field.editable)
+        self.assertEqual(cpf_field.max_length, 14)
+
+        cnpj_field: models.CharField = Profile.cnpj.field
+        self.assertIsInstance(cnpj_field, models.CharField)
+        self.assertTrue(cnpj_field.null)
+        self.assertTrue(cnpj_field.blank)
+        self.assertIsNone(cnpj_field.db_column)
+        self.assertTrue(cnpj_field.editable)
+        self.assertEqual(cnpj_field.max_length, 18)
 
 
 class AddressModelTest(TestCase):
@@ -110,7 +123,6 @@ class AddressModelTest(TestCase):
             neighborhood='Test Neighborhood',
             city='Test City',
             state='TS',
-            country='Test Country',
             zip_code='12345678',
         )
 
@@ -149,11 +161,6 @@ class AddressModelTest(TestCase):
         field_label = address._meta.get_field('state').verbose_name
         self.assertEqual(field_label, 'Estado')
 
-    def test_country_label(self):
-        address = Address.objects.get(user=self.user)
-        field_label = address._meta.get_field('country').verbose_name
-        self.assertEqual(field_label, 'País')
-
     def test_zip_code_label(self):
         address = Address.objects.get(user=self.user)
         field_label = address._meta.get_field('zip_code').verbose_name
@@ -187,7 +194,6 @@ class AddressModelTest(TestCase):
                 'neighborhood',
                 'city',
                 'state',
-                'country',
                 'zip_code',
             ),
         )
@@ -246,13 +252,6 @@ class AddressModelTest(TestCase):
         self.assertTrue(state_field.editable)
         self.assertEqual(state_field.max_length, 2)
 
-        country_field: models.CharField = Address.country.field
-        self.assertIsInstance(country_field, models.CharField)
-        self.assertFalse(country_field.null)
-        self.assertFalse(country_field.blank)
-        self.assertIsNone(country_field.db_column)
-        self.assertTrue(country_field.editable)
-        self.assertEqual(country_field.max_length, 255)
 
         zip_code_field: models.CharField = Address.zip_code.field
         self.assertIsInstance(zip_code_field, models.CharField)

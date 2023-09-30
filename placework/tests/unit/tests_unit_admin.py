@@ -28,7 +28,9 @@ class UserAdminTest(TestCase):
             'first_name',
             'last_name',
             'email',
-            'user_profile__cpf_cnpj',
+            'user_profile__cpf',
+            'user_profile__cnpj',
+            'user_profile__company_name',
         )
         self.assertEqual(UserAdmin.search_fields, expected_fields)
 
