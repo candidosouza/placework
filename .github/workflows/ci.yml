@@ -34,7 +34,7 @@ jobs:
 
       - name: Run coverage
         run: |
-          docker-compose exec -T -u root app bash -c "pytest -x --ignore .venv --cov placework -vv && coverage xml && coverage html"
+          docker-compose exec -T -u root app bash -c "pytest -s -x --ignore .venv --cov placework -vv && coverage xml && coverage html"
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
