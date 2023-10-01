@@ -15,7 +15,7 @@ from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView
 from django.contrib import messages
-from placework.models import PasswordResetCode, Profile, Address
+from placework.models import PasswordResetCode, Profile, Address, PasswordHistory
 from placework.forms import (
     AddressForm,
     LoginForm,
@@ -30,6 +30,8 @@ from placework.utils import (
     is_reset_code_valid,
     send_reset_code_email,
     send_password_email,
+    hash_password,
+    change_password,
 )
 
 
@@ -177,6 +179,13 @@ class RegisterUserView(TemplateView):
             user.email = username
             user.save()
 
+            # Adicione a nova senha ao histórico
+            password_history = hash_password(password)
+            PasswordHistory.objects.create(
+                user=user,
+                hashed_password=password_history
+            )
+
             if full_name:
                 first_name, _, last_name = full_name.partition(' ')
                 user.first_name = first_name
@@ -261,8 +270,10 @@ class UpdateView(LoginRequiredMixin, SuccessMessageMixin, TemplateView):
                     user.user_profile.save()
                 user.save()
             if password:
-                user.set_password(password)
-                user.save()
+                if not change_password(user, password):
+                    messages.error(request, 'A nova senha não pode corresponder a uma senha anterior.')
+                    context = {'form': form}
+                    return render(request, 'placework/update.html', context)
                 login(request, user)
             messages.success(self.request, 'Dados Alterados com Sucesso!')
             return redirect('home')

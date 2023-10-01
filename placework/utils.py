@@ -1,5 +1,6 @@
 import uuid
 import secrets
+import bcrypt
 from django.utils import timezone
 from datetime import timedelta
 from sendgrid import SendGridAPIClient
@@ -7,8 +8,45 @@ from sendgrid.helpers.mail import Mail
 from django.core.mail import send_mail,BadHeaderError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
-from placework.models import PasswordResetCode
+from placework.models import PasswordResetCode, PasswordHistory
 from common.utils import log
+
+
+def hash_password(password):
+    # Gera um salt aleatório e crie o hash da senha
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+
+    # Retorne o hash da senha como uma string
+    return hashed.decode('utf-8')
+
+
+def check_password(password, hashed_password):
+    # Verifique se a senha fornecida corresponde ao hash armazenado
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+
+
+def change_password(user, new_password):
+    # Recupere as últimas 5 senhas do histórico do usuário
+    password_history = list(PasswordHistory.objects.filter(user=user).order_by('-id'))[:5]
+
+    # Verifique se a nova senha corresponde a uma das senhas no histórico
+    for history_entry in password_history:
+        if check_password(new_password, history_entry.hashed_password):
+            return False
+    # Adicione a nova senha ao histórico
+    hashed_password = hash_password(new_password)
+    PasswordHistory.objects.create(user=user, hashed_password=hashed_password)
+
+    # Certifique-se de que o histórico de senhas contenha no máximo 5 entradas
+    if len(password_history) >= 5:
+        oldest_entry = password_history[-1]
+        oldest_entry.delete()
+
+    # Atualize a senha do usuário
+    user.set_password(new_password)
+    user.save()
+    return True
 
 
 def generate_reset_code(user):
