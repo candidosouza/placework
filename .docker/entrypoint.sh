@@ -1,6 +1,9 @@
 #!/bin/bash
 
-cp .env.example .env
+if [ ! -f ".env" ]; then
+  cp .env.example .env
+fi
+
 npm install
 poetry config virtualenvs.in-project true
 poetry install
