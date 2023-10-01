@@ -331,3 +331,37 @@ class UpdateForm(forms.Form):
             }
         )
     )
+
+class PasswordResetForm(forms.Form):
+    email = forms.EmailField(
+        label='Email',
+        max_length=254,
+        required=True,
+        widget=forms.EmailInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'Email'
+            }
+        )
+    )
+
+    class Meta:
+        model = User
+
+
+class PasswordResetConfirmForm(forms.Form):
+    password = forms.CharField(
+        label='Digite sua nova senha',
+        required=True,
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'Nova Senha',
+                'autocomplete': 'current-password'
+            }
+        )
+    )
+
+    class Meta:
+        model = User

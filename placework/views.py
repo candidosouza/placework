@@ -1,7 +1,12 @@
+from hmac import new
+from math import e
 from typing import Any
+import uuid
 from django import http
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.forms import PasswordResetForm
+from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.db import transaction
@@ -10,13 +15,23 @@ from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView
 from django.contrib import messages
-from placework.models import Profile, Address
+from placework.models import PasswordResetCode, Profile, Address
 from placework.forms import (
     AddressForm,
     LoginForm,
     UpdateForm,
-    RegisterForm
+    RegisterForm,
+    PasswordResetForm,
+    PasswordResetConfirmForm
 )
+from placework.utils import (
+    generate_password,
+    generate_reset_code,
+    is_reset_code_valid,
+    send_reset_code_email,
+    send_password_email,
+)
+
 
 
 class HomeView(TemplateView):
@@ -59,16 +74,25 @@ class LoginView(TemplateView):
                     messages.error(
                         request,
                         'Usuário bloqueado! Você errou a senha 5 vezes. '
-                        'Clique em "Esqueci minha senha" para recuperar.'
+                        'Clique em "Esqueceu senha" para recuperar.'
                     )
                     context = {'form': form}
                     return render(request, 'placework/login.html', context)
+                
+                if user_profile.reset_password:
+                    messages.error(
+                        request,
+                        'Você precisa redefinir sua senha.'
+                    )
+                    login(request, user)
+                    return redirect('password_new')
 
                 if user is not None:
                     # Senha correta, faça login e redefina as tentativas incorretas
                     login(request, user)
                     user_profile.error_login = 0
                     user_profile.save()
+                    
                     return redirect('home')
                 else:
                     # Senha incorreta, registre a tentativa e, se necessário, bloqueie o usuário
@@ -273,6 +297,97 @@ class AddAddressView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
             self.get_context_data(form=form)
         )
 
+class CustomPasswordResetConfirmView(TemplateView):
+    template_name = 'placework/password_reset_confirm.html'
+
+    def get(self, request, *args, **kwargs):
+        code = kwargs.get('uuid')
+        verify_code = PasswordResetCode.objects.filter(code=code).first()
+        if not verify_code:
+            messages.error(request, 'Código inválido.')
+            return redirect('home')
+        
+        if is_reset_code_valid(verify_code):
+            messages.error(request, 'Código expirado.')
+            # verify_code.delete()
+            return redirect('home')
+        
+        new_password = generate_password()
+        user = verify_code.user
+        user.set_password(new_password)
+        user.save()
+        user.user_profile.error_login = 0
+        user.user_profile.is_blocked = False
+        user.user_profile.reset_password = True
+        user.user_profile.save()
+
+        send_password_email(user, new_password)
+
+        verify_code.delete()
+
+        messages.success(request, 'Senha alterada com sucesso. Enviamos no seu e-mail.')
+        return redirect('login')
+
+
+class NewPasswordVew(TemplateView):
+    template_name = 'placework/password_new.html'
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('home')
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = PasswordResetConfirmForm()
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        form = PasswordResetConfirmForm(request.POST)
+        if form.is_valid():
+            password = form.cleaned_data['password']
+            user = request.user
+            user.set_password(password)
+            user.save()
+            user.user_profile.reset_password = False
+            user.user_profile.save()
+            login(request, user)
+            messages.success(request, 'Senha alterada com sucesso.')
+            return redirect('home')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)
+            context = {'form': form}
+            return render(request, 'placework/password_new.html', context)
+        
+
+
 def custom_logout(request):
     logout(request)
     return redirect('home')
+
+
+def password_reset(request):
+    if request.method == "POST":
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            user = User.objects.filter(email=email).first()
+            if user:
+                code = generate_reset_code(user)
+                send_email = send_reset_code_email(request, user, code)
+                if not send_email:
+                    messages.error(request, 'e-mail não enviado')
+                    return render(request, 'placework/password_reset.html', {'form': form})
+            else:
+                messages.error(request, 'Não há usuário cadastrado com este e-mail.')
+                return redirect('password_reset')   
+            messages.success(request, 'Um e-mail com instruções de recuperação de senha foi enviado para o seu endereço de e-mail.')
+            return render(request, 'placework/password_reset.html', {'form': form})
+        else:
+            messages.error(request, 'Ocorreu um erro ao enviar o e-mail de recuperação de senha.')
+            return redirect('password_reset')
+    else:
+        form = PasswordResetForm()
+    return render(request, 'placework/password_reset.html', {'form': form})

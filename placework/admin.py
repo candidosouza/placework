@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 
-from placework.models import Address, Profile
+from placework.models import Address, Profile, PasswordResetCode
 
 
 class ProfileInline(admin.StackedInline):
@@ -52,5 +52,18 @@ class UserAdmin(BaseUserAdmin):
     cpf_cnpj.short_description = 'CPF/CNPJ'
 
 
+
+
+class PasswordResetCodeAdmin(BaseUserAdmin):
+    list_display = ('email', 'code', 'created_at',)
+    list_filter = (
+        'created_at',
+    )
+
+    def email(self, obj):
+        return self.obj.user.email
+
+
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+admin.site.register(PasswordResetCode)

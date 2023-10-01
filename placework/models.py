@@ -1,7 +1,9 @@
+from cgitb import reset
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from validate_docbr import CPF, CNPJ
+import uuid
 
 
 class Profile(models.Model):
@@ -28,6 +30,7 @@ class Profile(models.Model):
     cnpj = models.CharField(max_length=18, verbose_name='CNPJ', blank=True, null=True, unique=True)
     error_login = models.IntegerField(default=0, verbose_name='Erros de login')
     is_blocked = models.BooleanField(default=False, verbose_name='Bloqueado')
+    reset_password = models.BooleanField(default=False, verbose_name='Redefinir senha')
 
     def __str__(self):
         return f'{self.user.username}'
@@ -68,3 +71,21 @@ class Address(models.Model):
     class Meta:
         verbose_name = 'Endereço'
         verbose_name_plural = 'Endereços'
+
+
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_reset_code')
+    code = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    expiration_time = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'user: {self.user.email}, code: {self.code}, expira em: {self.expiration_time}'
+
+
+class PasswordHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_history')
+    hashed_password = models.CharField(max_length=128)
+
+    def __str__(self):
+        return self.user.username

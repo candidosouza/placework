@@ -5,7 +5,10 @@ from placework.views import (
     RegisterUserView,
     UpdateView,
     AddAddressView,
-    custom_logout
+    CustomPasswordResetConfirmView,
+    NewPasswordVew,
+    custom_logout,
+    password_reset
 )
 
 urlpatterns = [
@@ -15,4 +18,7 @@ urlpatterns = [
     path('adicionar-endereco/<int:pk>/', AddAddressView.as_view(), name='add_address'),
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', custom_logout, name='logout'),
+    path('password_reset/', password_reset, name='password_reset'),
+    path('password_reset_confirm/<uuid>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('password_new/', NewPasswordVew.as_view(), name='password_new'),
 ]
