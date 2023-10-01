@@ -70,7 +70,7 @@ class ProfileModelTest(TestCase):
         fields_name = tuple(field.name for field in Profile._meta.fields)
         self.assertEqual(
             fields_name,
-            ('id', 'user', 'account_type', 'is_active', 'company_name', 'cpf', 'cnpj'),
+            ('id', 'user', 'account_type', 'is_active', 'company_name', 'cpf', 'cnpj', 'error_login', 'is_blocked'),
         )
 
         user_field: models.ForeignKey = Profile.user.field

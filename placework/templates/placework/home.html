@@ -45,8 +45,40 @@
       <hr class="my-4" />
       <p>Fomos Criados para gerar sinergia entre empresas e nômandes digitais</p>
 
-      <a class="btn btn-success btn-lg" href="{% url 'login' %}" role="button">Logar no sistema</a>
-      <a class="btn btn-primary btn-lg" href="{% url 'register' %}" role="button">Cadastrar</a>
+      <div class="row">
+        <div class="col-lg-6">
+          <form class="user-form" action="{% url 'login' %}" method="post">
+              {% csrf_token %}
+
+              {% if messages %}
+                  {% for message in messages %}
+                  <p class="lead {% if message.tags %}text-{{ message.tags }}"{% endif %}>{{ message }}</p>
+                  {% endfor %}
+              {% endif %}
+              
+                {% for field in form.visible_fields %}
+                <div class="form-group">
+                    {% for error in field.errors %}
+                        <p class="text-danger">{{ error }}</p>
+                    {% endfor %}
+
+                    <label for="{{ field.id_for_label }}">{{ field.label_tag }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+              
+              <button class="btn btn-primary btn-lg" type="submit">Entrar</button>
+              <p class="link">
+                Não tem uma conta? <a href="{% url 'register' %}">Cadastre-se</a>
+              </p>
+          </form>
+        </div>
+      </div>
+
+      
     </div>
   {% endif %}
 {% endblock %}

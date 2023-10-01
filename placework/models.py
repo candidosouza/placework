@@ -26,6 +26,8 @@ class Profile(models.Model):
     company_name = models.CharField(max_length=255, verbose_name='Nome da empresa', blank=True)
     cpf = models.CharField(max_length=14, verbose_name='CPF', blank=True, null=True, unique=True)
     cnpj = models.CharField(max_length=18, verbose_name='CNPJ', blank=True, null=True, unique=True)
+    error_login = models.IntegerField(default=0, verbose_name='Erros de login')
+    is_blocked = models.BooleanField(default=False, verbose_name='Bloqueado')
 
     def __str__(self):
         return f'{self.user.username}'

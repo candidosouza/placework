@@ -6,7 +6,7 @@
     <p class="lead">Faça o login em nosso sistema.</p>
     <hr class="my-4" />
 
-    <form class="user-form" method="post">
+    <form class="{% url 'register' %}" method="post">
         {% csrf_token %}
 
         {% if messages %}
