@@ -82,6 +82,10 @@ class EmailActivation(models.Model):
 
     def __str__(self):
         return f'user: {self.user.email}, token: {self.token}, expira em: {self.expiration_time}'
+    
+    class Meta:
+        verbose_name = 'Ativação de E-mail'
+        verbose_name_plural = 'Ativações de E-mail'
 
 class PasswordResetCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_reset_code')
@@ -91,6 +95,10 @@ class PasswordResetCode(models.Model):
 
     def __str__(self):
         return f'user: {self.user.email}, code: {self.code}, expira em: {self.expiration_time}'
+    
+    class Meta:
+        verbose_name = 'Código de Redefinição de Senha'
+        verbose_name_plural = 'Códigos de Redefinição de Senha'
 
 
 class PasswordHistory(models.Model):
@@ -98,4 +106,8 @@ class PasswordHistory(models.Model):
     hashed_password = models.CharField(max_length=128)
 
     def __str__(self):
-        return self.user.username
+        return f'user: {self.user.email}, pass: {self.hashed_password}'
+    
+    class Meta:
+        verbose_name = 'Histórico de Senhas'
+        verbose_name_plural = 'Históricos de Senhas'

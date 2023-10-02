@@ -12,6 +12,7 @@ from django.urls import reverse_lazy
 from django.db import transaction
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
+from django.views import View
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView
 from django.contrib import messages
@@ -325,6 +326,11 @@ class CustomPasswordResetConfirmView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         code = kwargs.get('uuid')
+        try:
+            uuid.UUID(code)
+        except ValueError:
+            messages.error(request, 'Código inválido.')
+            return redirect('home')
         verify_code = PasswordResetCode.objects.filter(code=code).first()
         if not verify_code:
             messages.error(request, 'Código inválido.')
@@ -391,29 +397,58 @@ def custom_logout(request):
     return redirect('home')
 
 
-def password_reset(request):
-    if request.method == "POST":
+class PasswordResetView(View):
+    template_name = 'placework/password_reset.html'
+
+    def get(self, request, *args, **kwargs):
+        form = PasswordResetForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
         form = PasswordResetForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
-            user = User.objects.filter(email=email).first()
-            if user:
-                code = generate_reset_code(user)
-                send_email = send_reset_code_email(request, user, code)
-                if not send_email:
-                    messages.error(request, 'e-mail não enviado')
-                    return render(request, 'placework/password_reset.html', {'form': form})
-            else:
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
                 messages.error(request, 'Não há usuário cadastrado com este e-mail.')
-                return redirect('password_reset')   
+                return redirect('password_reset')
+
+            code = generate_reset_code(user)
+            if not send_reset_code_email(request, user, code):
+                messages.error(request, 'Não foi possível enviar o e-mail de recuperação de senha.')
+                return redirect('password_reset')
+
             messages.success(request, 'Um e-mail com instruções de recuperação de senha foi enviado para o seu endereço de e-mail.')
-            return render(request, 'placework/password_reset.html', {'form': form})
-        else:
-            messages.error(request, 'Ocorreu um erro ao enviar o e-mail de recuperação de senha.')
-            return redirect('password_reset')
-    else:
-        form = PasswordResetForm()
-    return render(request, 'placework/password_reset.html', {'form': form})
+            return render(request, self.template_name, {'form': form})
+
+        messages.error(request, 'Ocorreu um erro ao enviar o e-mail de recuperação de senha.')
+        return redirect('password_reset')
+
+# TODO REFATORAR VIEW DE REDEFINIÇÃO DE SENHA
+# def password_reset(request):
+#     if request.method == "POST":
+#         form = PasswordResetForm(request.POST)
+#         if form.is_valid():
+#             email = form.cleaned_data['email']
+#             user = User.objects.filter(email=email).first()
+#             if user:
+#                 code = generate_reset_code(user)
+#                 send_email = send_reset_code_email(request, user, code)
+#                 if not send_email:
+#                     messages.error(request, 'e-mail não enviado')
+#                     return render(request, 'placework/password_reset.html', {'form': form})
+#             else:
+#                 messages.error(request, 'Não há usuário cadastrado com este e-mail.')
+#                 return redirect('password_reset')   
+#             messages.success(request, 'Um e-mail com instruções de recuperação de senha foi enviado para o seu endereço de e-mail.')
+#             return render(request, 'placework/password_reset.html', {'form': form})
+#         else:
+#             messages.error(request, 'Ocorreu um erro ao enviar o e-mail de recuperação de senha.')
+#             return redirect('password_reset')
+#     else:
+#         form = PasswordResetForm()
+#     return render(request, 'placework/password_reset.html', {'form': form})
 
 
 def active_email(request, email, uuid):

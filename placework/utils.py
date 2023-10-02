@@ -14,8 +14,6 @@ def hash_password(password):
     # Gera um salt aleatório e crie o hash da senha
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-
-    # Retorne o hash da senha como uma string
     return hashed.decode('utf-8')
 
 
@@ -57,7 +55,6 @@ def generate_reset_code(user):
 
 
 def is_reset_code_valid(reset_code):
-    # Verifique se a hora atual é maior que à hora de expiração
     return timezone.now() > reset_code.expiration_time
 
 
