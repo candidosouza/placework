@@ -1,4 +1,5 @@
-from cgitb import reset
+from datetime import timedelta
+from django.utils import timezone
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -24,7 +25,7 @@ class Profile(models.Model):
         default='PF',
         verbose_name='Tipo de conta',
     )
-    is_active = models.BooleanField(default=True, verbose_name='Ativo')
+    is_active = models.BooleanField(default=False, verbose_name='Ativo')
     company_name = models.CharField(max_length=255, verbose_name='Nome da empresa', blank=True)
     cpf = models.CharField(max_length=14, verbose_name='CPF', blank=True, null=True, unique=True)
     cnpj = models.CharField(max_length=18, verbose_name='CNPJ', blank=True, null=True, unique=True)
@@ -72,6 +73,15 @@ class Address(models.Model):
         verbose_name = 'Endereço'
         verbose_name_plural = 'Endereços'
 
+
+class EmailActivation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    expiration_time = models.DateTimeField(default=timezone.now() + timedelta(days=1))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'user: {self.user.email}, token: {self.token}, expira em: {self.expiration_time}'
 
 class PasswordResetCode(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_reset_code')

@@ -49,7 +49,7 @@ class ProfileModelTest(TestCase):
     def test_is_active_default(self):
         profile = Profile.objects.get(user=self.user)
         default_value = profile._meta.get_field('is_active').default
-        self.assertEqual(default_value, True)
+        self.assertEqual(default_value, False)
 
     def test_profile_str_method(self):
         profile = Profile.objects.get(user=self.user)

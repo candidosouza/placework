@@ -98,3 +98,22 @@ def send_reset_code_email(request, user, code):
         log(str(e))
         print(str(e))
         return False
+
+
+def send_register_code_email(request, user, code):
+    subject = 'Solicitação de Cadastro'
+
+    link = f'http://{request.get_host()}/cadastro/active_email/{user.email}/{code}'
+    if request.is_secure():
+        link = f'https://{request.get_host()}/cadastro/active_email/{user.email}/{code}'
+
+    message = f'Use o seguinte link para ativar sua conta: \n {link}'
+    from_email = 'noreply@email.com'
+    recipient_list = [user.email]
+    try:
+        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        return True
+    except Exception as e:
+        log(str(e))
+        print(str(e))
+        return False

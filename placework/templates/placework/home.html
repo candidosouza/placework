@@ -71,6 +71,9 @@
                 {% endfor %}
               
               <button class="btn btn-primary btn-lg" type="submit">Entrar</button>
+              {% if request.GET.error_active %}
+                <a href="{% url 'register_email_activation' %}" class="btn btn-success btn-lg">Reenviar Ativação</a>
+              {% endif %}
               <a href="{% url 'password_reset' %}">Esqueceu senha</a>
 
               <hr class="my-4" />

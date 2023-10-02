@@ -15,7 +15,7 @@ from django.shortcuts import render, redirect
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView
 from django.contrib import messages
-from placework.models import PasswordResetCode, Profile, Address, PasswordHistory
+from placework.models import EmailActivation, PasswordResetCode, Profile, Address, PasswordHistory
 from placework.forms import (
     AddressForm,
     LoginForm,
@@ -32,6 +32,7 @@ from placework.utils import (
     send_password_email,
     hash_password,
     change_password,
+    send_register_code_email
 )
 
 
@@ -88,6 +89,15 @@ class LoginView(TemplateView):
                     )
                     login(request, user)
                     return redirect('password_new')
+                
+                if EmailActivation.objects.filter(user=user).exists():
+                    messages.error(
+                        request,
+                        'Seu email não está verificado. Acesse o link enviado para seu email.'
+                    )
+                    response = redirect('login')
+                    response['Location'] += '?error_active=1'
+                    return response
 
                 if user is not None:
                     # Senha correta, faça login e redefina as tentativas incorretas
@@ -211,8 +221,10 @@ class RegisterUserView(TemplateView):
             )
             address.save()
 
-            user = authenticate(username=username, password=password)
-            login(request, user)
+            activation = EmailActivation(user=user)
+            activation.save()
+            send_register_code_email(request, user, activation.token)
+            messages.success(request, 'Enviamos um email com um link de ativação para o seu endereço de e-mail. Por favor, verifique sua caixa de entrada.')
             return redirect('home')
 
         if not form.is_valid():
@@ -402,3 +414,52 @@ def password_reset(request):
     else:
         form = PasswordResetForm()
     return render(request, 'placework/password_reset.html', {'form': form})
+
+
+def active_email(request, email, uuid):
+    activation = EmailActivation.objects.filter(token=uuid, user__email=email).first()
+    if not activation:
+        messages.error(request, 'Código inválido.')
+        return redirect('home')
+    user = activation.user
+    user.user_profile.is_active = True
+    user.user_profile.save()
+    activation.delete()
+    messages.success(request, 'E-mail verificado com sucesso. Faça o login para acessar sua conta.')
+    return redirect('login')
+
+
+class SedingEmailActivationView(TemplateView):
+    template_name = 'placework/register_email_activation.html'
+
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('home')
+        return super().get(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = PasswordResetForm()
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            user = User.objects.filter(email=email).first()
+            if not user:
+                messages.error(request, 'Não há usuário cadastrado com este e-mail.')
+                return redirect('register_email_activation')
+            if user.user_profile.is_active:
+                messages.error(request, 'E-mail já ativado.')
+                return redirect('register_email_activation')
+            last_email_activate =  EmailActivation.objects.filter(user=user).first()
+            if last_email_activate:
+                last_email_activate.delete()
+                
+            activation = EmailActivation(user=user)
+            activation.save()
+            send_register_code_email(request, user, activation.token)
+            messages.success(request, 'Reenviamos um email com um link de ativação para o seu endereço de e-mail. Por favor, verifique sua caixa de entrada.')
+            return redirect('login')
+        return render(request, 'placework/register_email_activation.html')
