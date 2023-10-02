@@ -127,6 +127,12 @@ USE_I18N = True
 # dava erro no código de expiração
 USE_TZ = False
 
+LOGIN_URL = '/login/'
+# segurança
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_REFERRER_POLICY = 'same-origin'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/

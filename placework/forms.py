@@ -303,9 +303,6 @@ class LoginForm(forms.Form):
         )
     )
 
-    class Meta:
-        model = User
-
 
 class UpdateForm(forms.Form):
     name = forms.CharField(

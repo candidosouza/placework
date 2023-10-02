@@ -345,7 +345,8 @@ class AddAddressViewTestCase(TestCase):
         }
         response = self.client.post(f'/adicionar-endereco/{self.user.pk}/', data, follow=True)
 
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 200)
+        self.assertRedirects(response, f'/login/?next=/adicionar-endereco/{self.user.pk}/')
 
 
 class CustomPasswordResetConfirmViewTestCase(TestCase):
