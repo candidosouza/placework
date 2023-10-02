@@ -47,7 +47,7 @@ Docker
 
 ```bash
 git clone https://github.com/candidosouza/placework.git
-``
+```
 2. Acesse a pasta do projeto
 
 ```bash
