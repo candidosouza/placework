@@ -3,8 +3,6 @@ import secrets
 import bcrypt
 from django.utils import timezone
 from datetime import timedelta
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 from django.core.mail import send_mail,BadHeaderError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
