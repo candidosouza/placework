@@ -32,8 +32,8 @@ Biblioteca para envio de e-mail para desenvolvimento
 Empacotador de módulos que prepara o JavaScript, css, imagens e demais ativos para o navegador
 -[Bootstrap](https://getbootstrap.com/)
 Framework front-end para desenvolvimento de componentes de interface e front-end para sites e aplicações web usando HTML, CSS e JavaScript
-- [SonarCloud](https://sonarcloud.io/)
-Ferramenta de análise estática de código
+<!-- - [SonarCloud](https://sonarcloud.io/)
+Ferramenta de análise estática de código -->
 
 
 ## Instalação
@@ -42,23 +42,96 @@ Ferramenta de análise estática de código
 Docker
 
 ### Instalação
+
 1. Clone o repositório
-2. Execute o comando `docker-compose up -d --build`
-3. Execute o comando `docker-compose exec app python bash`
-4. Execute o comando `poetry install`
-4. Execute o comando `poetry shell`
-5. Execute o comando `python manage.py migrate`
-6. Execute o comando `python manage.py seeds` para dados fakes
-7. Execute o comando `python manage.py runserver 0.0.0.0:8000`
+
+```bash
+git clone https://github.com/candidosouza/placework.git
+``
+2. Acesse a pasta do projeto
+
+```bash
+cd placework
+```
+3. Execute o comando 
+
+```bash
+docker-compose up -d --build`
+```
+
+4. Execute o comando para entrar no container da aplicação
+
+```bash
+docker-compose exec app bash
+```
+
+5. Execute o comando para instalar as dependências
+
+```bash
+poetry install
+```
+
+6. Ativar o ambiente virtual
+
+```bash
+poetry shell
+```
+
+7. Rodar as migrações
+```bash
+python manage.py migrate
+```
+8. Rodar as fixtures
+```bash
+python manage.py seeds
+```
+9. Rodar o servidor
+
+```bash
+ python manage.py runserver 0.0.0.0:8000
+```
+
+10. Acesse o sistema em [http://localhost:8000](http://localhost:8000/)
+
+11. Acesse o pgadmin em [http://localhost:5050](http://localhost:5050/)
+
+12. Acesse o container do postgres
+
+```bash
+docker-compose exec db bash
+```
+
+### Em caso de problemas com a estilização
+
+Entrar na pasta do projeto e rodar o comando:
+
+```bash
+npm install
+```
+e após a instalação, rodar o comando:
+
+```bash
+npm run watch
+```
+
+### Acesso ao admin
+
+- Usuário: admin
+- Senha: admin
+
+[http://localhost:8000/admin-placework/](http://localhost:8000/admin-placework/)
 
 
-## Utilização
+#### Para envio de emails:
 
-App: [http://localhost:8000](http://localhost:8000/)
+O sistema foi configurado usando o MailTrap, para que os emails sejam enviados, é necessário configurar as variáveis de ambiente no arquivo `.env`:
 
-Pg Admin: [http://localhost:5050](http://localhost:5050/)
+link: [https://mailtrap.io/](https://mailtrap.io/)
 
-Container Postgres: `docker-compose exec db bash`
+váriáveis necessárias:
+
+- EMAIL_HOST_USER
+- EMAIL_HOST_PASSWORD
 
 
 ## Informações Importantes
