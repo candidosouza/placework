@@ -1,7 +1,5 @@
 # placework
-Respositório destinado ao cadastro e login para app  Place Work
-
-# Documentação em andamento...
+Respositório destinado ao cadastro e login para app  PlaceWork
 
 ## Índice
 
@@ -68,3 +66,4 @@ Container Postgres: `docker-compose exec db bash`
 - Algumas informações sobre os arquivos e pastas do projeto:
     - `common/` - Pasta com arquivos em comuns a todos os apps do projeto
     - `setup/` - Pasta com arquivos de configuração do projeto
+    - `placework/` - Pasta com arquivos do app
