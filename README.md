@@ -56,7 +56,7 @@ cd placework
 3. Execute o comando 
 
 ```bash
-docker-compose up -d --build`
+docker-compose up -d --build
 ```
 
 4. Execute o comando para entrar no container da aplicação
