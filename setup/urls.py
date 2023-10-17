@@ -22,4 +22,4 @@ from placework.urls import urlpatterns as placework_urls
 urlpatterns = [
     path('admin-placework/', admin.site.urls),
     path('', include(placework_urls)),
-]
+] 
