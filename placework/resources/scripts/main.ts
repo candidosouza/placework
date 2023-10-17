@@ -31,7 +31,6 @@ if (formradio) {
 const zipCode = document.querySelector("#id_zip_code") as HTMLInputElement;
 const number = document.querySelector("#id_number") as HTMLInputElement;
 
-
 const cepInfo = {
     street: document.querySelector("#id_street") as HTMLInputElement,
     neighborhood: document.querySelector("#id_neighborhood") as HTMLInputElement,
@@ -48,7 +47,7 @@ const updateCepInfo = (data: any) => {
 
 const fetchCepInfo = async (cep: string) => {
     try {
-        const url = await `https://viacep.com.br/ws/${cep}/json/`;
+        const url = `https://viacep.com.br/ws/${cep}/json/`;
         fetch(url)
             .then((response) => response.json())
             .then((data) => {
@@ -64,8 +63,6 @@ const fetchCepInfo = async (cep: string) => {
         console.error('Erro na solicitação:', error);
     }
 };
-
-// console.log('okokokoko');
 
 zipCode.addEventListener('input', () => {
     const enteredCep = zipCode.value.replace(/\D/g, ''); // Remove caracteres não numéricos

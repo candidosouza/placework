@@ -166,37 +166,29 @@ var updateCepInfo = function updateCepInfo(data) {
 };
 var fetchCepInfo = function fetchCepInfo(cep) {
   return __awaiter(_this, void 0, void 0, function () {
-    var url, error_1;
+    var url;
     return __generator(this, function (_a) {
-      switch (_a.label) {
-        case 0:
-          _a.trys.push([0, 2,, 3]);
-          return [4 /*yield*/, "https://viacep.com.br/ws/".concat(cep, "/json/")];
-        case 1:
-          url = _a.sent();
-          fetch(url).then(function (response) {
-            return response.json();
-          }).then(function (data) {
-            if (data.erro) {
-              alert("CEP não encontrado.");
-            } else {
-              console.log(data);
-              updateCepInfo(data);
-              number.focus();
-            }
-          });
-          return [3 /*break*/, 3];
-        case 2:
-          error_1 = _a.sent();
-          console.error('Erro na solicitação:', error_1);
-          return [3 /*break*/, 3];
-        case 3:
-          return [2 /*return*/];
+      try {
+        url = "https://viacep.com.br/ws/".concat(cep, "/json/");
+        fetch(url).then(function (response) {
+          return response.json();
+        }).then(function (data) {
+          if (data.erro) {
+            alert("CEP não encontrado.");
+          } else {
+            console.log(data);
+            updateCepInfo(data);
+            number.focus();
+          }
+        });
+      } catch (error) {
+        console.error('Erro na solicitação:', error);
       }
+      return [2 /*return*/];
     });
   });
 };
-// console.log('okokokoko');
+
 zipCode.addEventListener('input', function () {
   var enteredCep = zipCode.value.replace(/\D/g, ''); // Remove caracteres não numéricos
   if (enteredCep.length === 8) {
