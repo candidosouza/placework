@@ -1,5 +1,7 @@
 {% extends 'layouts/layout.html' %}
 
+{% load static %}
+
 {% block content %}
   <div class="jumbotron">
     <h1 class="display-4">Olá, Bem vindo ao PlaceWork!</h1>
@@ -172,4 +174,5 @@ document.addEventListener("DOMContentLoaded", function () {
     Inputmask("99999-999").mask(document.getElementById('id_zip_code'));
 });
 </script>
+<script src="{% static 'js/main.js' %}" ></script>
 {% endblock %}

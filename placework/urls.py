@@ -1,4 +1,6 @@
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from placework.views import (
     HomeView,
     LoginView,
@@ -26,4 +28,4 @@ urlpatterns = [
     path('password_reset/', PasswordResetView.as_view(), name='password_reset'),
     path('password_reset_confirm/<uuid>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('password_new/', NewPasswordVew.as_view(), name='password_new'),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
