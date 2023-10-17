@@ -1,5 +1,6 @@
 from hmac import new
 from math import e
+from re import U
 from typing import Any
 import uuid
 from django import http
@@ -50,6 +51,9 @@ class HomeView(TemplateView):
 class LoginView(TemplateView):
     template_name = 'placework/login.html'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.form = None
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -62,83 +66,78 @@ class LoginView(TemplateView):
         return context
     
     def post(self, request, *args, **kwargs):
-        form = LoginForm(request.POST)
-        
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
+        self.form = LoginForm(request.POST)
 
-            # Verifique se o usuário existe
-            if User.objects.filter(username=username).exists():
-                user = authenticate(username=username, password=password)
-                user_profile = Profile.objects.get(user__username=username)
-
-                if user_profile.is_blocked:
-                    # Usuário bloqueado por muitas tentativas incorretas
-                    messages.error(
-                        request,
-                        'Usuário bloqueado! Você errou a senha 5 vezes. '
-                        'Clique em "Esqueceu senha" para recuperar.'
-                    )
-                    context = {'form': form}
-                    return render(request, 'placework/login.html', context)
-                
-                if user_profile.reset_password:
-                    messages.error(
-                        request,
-                        'Você precisa redefinir sua senha.'
-                    )
-                    login(request, user)
-                    return redirect('password_new')
-                
-                if EmailActivation.objects.filter(user=user).exists():
-                    messages.error(
-                        request,
-                        'Seu email não está verificado. Acesse o link enviado para seu email.'
-                    )
-                    response = redirect('login')
-                    response['Location'] += '?error_active=1'
-                    return response
-
-                if user is not None:
-                    # Senha correta, faça login e redefina as tentativas incorretas
-                    login(request, user)
-                    user_profile.error_login = 0
-                    user_profile.save()
-                    
-                    return redirect('home')
-                else:
-                    # Senha incorreta, registre a tentativa e, se necessário, bloqueie o usuário
-                    user_profile.error_login += 1
-                    user_profile.save()
-                    
-                    if user_profile.error_login == 5:
-                        user_profile.is_blocked = True
-                        user_profile.save()
-                    
-                    remaining_attempts = 5 - user_profile.error_login
-                    messages.error(
-                        request,
-                        f'Senha incorreta! Você tem mais {remaining_attempts} tentativas.'
-                    )
-                    context = {'form': form}
-                    return render(request, 'placework/login.html', context)
-            
-            # Usuário não encontrado
-            messages.error(
-                request,
-                'Usuário não localizado. Você pode se cadastrar ou fazer o login com um email registrado.'
-            )
-        
-        # Erros de validação do formulário
-        else:
-            for field, errors in form.errors.items():
+        if not self.form.is_valid():
+            for field, errors in self.form.errors.items():
                 for error in errors:
                     messages.error(request, error)
+            return self.handle_auth_failure(request, 'Email ou senha inválidos.')
         
-        # Erro genérico de email ou senha inválidos
-        messages.error(request, 'Email ou senha inválidos.')
-        context = {'form': form, 'no_user': True}
+        username = self.form.cleaned_data['username']
+        password = self.form.cleaned_data['password']
+
+        # Verifique se o usuário existe
+        if User.objects.filter(username=username).exists():
+            user = authenticate(username=username, password=password)
+            user_profile = Profile.objects.get(user__username=username)
+
+            if user_profile.is_blocked:
+                # Usuário bloqueado por muitas tentativas incorretas
+                return self.handle_auth_failure(
+                    request,
+                    'Usuário bloqueado! Você errou a senha 5 vezes. '
+                    'Clique em "Esqueceu senha" para recuperar.'
+                )
+            
+            if user_profile.reset_password:
+                messages.error(
+                    request,
+                    'Você precisa redefinir sua senha.'
+                )
+                login(request, user)
+                return redirect('password_new')
+            
+            if EmailActivation.objects.filter(user=user).exists():
+                messages.error(
+                    request,
+                    'Seu email não está verificado. Acesse o link enviado para seu email.'
+                )
+                response = redirect('login')
+                response['Location'] += '?error_active=1'
+                return response
+
+            if user is not None:
+                # Senha correta, faça login e redefina as tentativas incorretas
+                login(request, user)
+                user_profile.error_login = 0
+                user_profile.save()
+                
+                return redirect('home')
+            else:
+                # Senha incorreta, registra a tentativa e, se necessário, bloqueia o usuário
+                user_profile.error_login += 1
+                user_profile.save()
+                
+                if user_profile.error_login == 5:
+                    user_profile.is_blocked = True
+                    user_profile.save()
+                
+                remaining_attempts = 5 - user_profile.error_login
+                return self.handle_auth_failure(
+                    request,
+                    f'Senha incorreta! Você tem mais {remaining_attempts} tentativas.'
+                )
+        
+        # Usuário não encontrado
+        return self.handle_auth_failure(
+            request,
+            'Usuário não localizado. Você pode se cadastrar ou fazer o login com um email registrado.'
+        )
+
+    def handle_auth_failure(self, request, error_message):
+        messages.error(request, error_message)
+        context = {'form': self.form}
         return render(request, 'placework/login.html', context)
 
 
