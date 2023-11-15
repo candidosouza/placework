@@ -1,13 +1,8 @@
-from hmac import new
-from math import e
-from re import U
-from typing import Any
+
 import uuid
-from django import http
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import PasswordResetForm
-from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse_lazy
 from django.db import transaction
@@ -72,73 +67,83 @@ class LoginView(TemplateView):
             for field, errors in self.form.errors.items():
                 for error in errors:
                     messages.error(request, error)
-            return self.handle_auth_failure(request, 'Email ou senha inválidos.')
+            return self.handle_auth_failure('Email ou senha inválidos.')
         
         username = self.form.cleaned_data['username']
         password = self.form.cleaned_data['password']
 
-        # Verifique se o usuário existe
-        if User.objects.filter(username=username).exists():
-            user = authenticate(username=username, password=password)
-            user_profile = Profile.objects.get(user__username=username)
-
-            if user_profile.is_blocked:
-                # Usuário bloqueado por muitas tentativas incorretas
-                return self.handle_auth_failure(
-                    request,
-                    'Usuário bloqueado! Você errou a senha 5 vezes. '
-                    'Clique em "Esqueceu senha" para recuperar.'
-                )
-            
-            if user_profile.reset_password:
-                messages.error(
-                    request,
-                    'Você precisa redefinir sua senha.'
-                )
-                login(request, user)
-                return redirect('password_new')
-            
-            if EmailActivation.objects.filter(user=user).exists():
-                messages.error(
-                    request,
-                    'Seu email não está verificado. Acesse o link enviado para seu email.'
-                )
-                response = redirect('login')
-                response['Location'] += '?error_active=1'
-                return response
-
-            if user is not None:
-                # Senha correta, faça login e redefina as tentativas incorretas
-                login(request, user)
-                user_profile.error_login = 0
-                user_profile.save()
-                
-                return redirect('home')
-            else:
-                # Senha incorreta, registra a tentativa e, se necessário, bloqueia o usuário
-                user_profile.error_login += 1
-                user_profile.save()
-                
-                if user_profile.error_login == 5:
-                    user_profile.is_blocked = True
-                    user_profile.save()
-                
-                remaining_attempts = 5 - user_profile.error_login
-                return self.handle_auth_failure(
-                    request,
-                    f'Senha incorreta! Você tem mais {remaining_attempts} tentativas.'
-                )
+        # Verifica se o usuário existe
+        if not User.objects.filter(username=username).exists():
+            # Usuário não encontrado
+            return self.handle_auth_failure(
+                request,
+                'Usuário não localizado. Você pode se cadastrar ou fazer o login com um email registrado.'
+            )
         
-        # Usuário não encontrado
+        user = authenticate(username=username, password=password)
+        user_profile = Profile.objects.get(user__username=username)
+
+        if user_profile.is_blocked or user_profile.reset_password:
+            # usuário bloqueado ou resetar a senha
+            return self.restrict_user(user_profile, request)
+        
+        if EmailActivation.objects.filter(user=user).exists():
+            messages.error(
+                request,
+                'Seu email não está verificado. Acesse o link enviado para seu email.'
+            )
+            response = redirect('login')
+            response['Location'] += '?error_active=1'
+            return response
+
+        if user is not None:
+            # Senha correta, faça login e redefina as tentativas incorretas
+            login(request, user)
+            user_profile.error_login = 0
+            user_profile.save()
+            
+            return redirect('home')
+        else:
+            # Senha incorreta, registra a tentativa e, se necessário, bloqueia o usuário
+            return self.record_erros_and_block_user(user_profile)
+            
+
+    def record_erros_and_block_user(self, profile):
+        profile.error_login += 1
+        profile.save()
+        
+        if profile.error_login == 5:
+            profile.is_blocked = True
+            profile.save()
+        
+        remaining_attempts = 5 - profile.error_login
         return self.handle_auth_failure(
-            request,
-            'Usuário não localizado. Você pode se cadastrar ou fazer o login com um email registrado.'
+            f'Senha incorreta! Você tem mais {remaining_attempts} tentativas.'
         )
 
-    def handle_auth_failure(self, request, error_message):
-        messages.error(request, error_message)
+        
+    def restrict_user(self, user_profile, request):
+        if user_profile.is_blocked:
+            # Usuário bloqueado por muitas tentativas incorretas
+            return self.handle_auth_failure(
+                'Usuário bloqueado! Você errou a senha 5 vezes. '
+                'Clique em "Esqueceu senha" para recuperar.'
+            )
+        
+        if user_profile.reset_password:
+            # obriga a redefinição de senha
+            messages.error(
+                self.request,
+                'Você precisa redefinir sua senha.'
+            )
+            login(self.request, user_profile.user)
+            return redirect('password_new')
+    
+
+    def handle_auth_failure(self, error_message):
+        messages.error(self.request, error_message)
         context = {'form': self.form}
-        return render(request, 'placework/login.html', context)
+        return render(self.request, 'placework/login.html', context)
 
 
 class RegisterUserView(TemplateView):

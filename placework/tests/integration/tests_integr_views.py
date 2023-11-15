@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 
 from placework.models import Profile, Address, PasswordResetCode
 
@@ -29,10 +30,16 @@ class HomeViewIntegrationTest(TestCase):
 
 class LoginViewIntegrationTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.user = User.objects.create_user(username='testuser@test.com', password='testpassword')
+        self.profile = Profile.objects.create(
+            user=self.user,
+            account_type='PF',
+            cpf='123.456.789-09',
+            is_active=True
+        )
 
     def test_authenticated_user_redirect(self):
-        self.client.login(username='testuser', password='testpassword')
+        self.client.login(username='testuser@test.com', password='testpassword')
         response = self.client.get('/login/')
         self.assertRedirects(response, '/')
 
@@ -48,15 +55,60 @@ class LoginViewIntegrationTest(TestCase):
     def test_unauthenticated_user_post_invalid(self):
         self.client.logout()
 
-        response = self.client.post('/login/', {'username': 'testuser', 'password': 'wrongpassword'})
+        response = self.client.post('/login/', {'username': 'testuser@test.com', 'password': 'wrongpassword'})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Email ou senha inválidos.')
 
     def test_unauthenticated_user_post_invalid(self):
         self.client.logout()
 
-        response = self.client.post('/login/', {'username': 'testuser', 'password': 'wrongpassword'})
+        response = self.client.post('/login/', {'username': 'testuser@test.com', 'password': 'wrongpassword'})
         self.assertEqual(response.status_code, 200)
+
+    def test_checks_if_it_blocks_users_with_login_errors(self):
+        """verifica se bloqueia usuário com erros de login"""
+        self.client.logout()
+        response = self.client.post('/login/', {'username': 'testuser@test.com', 'password': 'wrongpassword'})
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), 'Senha incorreta! Você tem mais 4 tentativas.')
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 1)
+
+        response = self.client.post('/login/', {'username': 'testuser@test.com', 'password': 'wrongpassword'})
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), 'Senha incorreta! Você tem mais 3 tentativas.')
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 2)
+
+        response = self.client.post('/login/', {'username': 'testuser@test.com', 'password': 'wrongpassword'})
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), 'Senha incorreta! Você tem mais 2 tentativas.')
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 3)
+
+        response = self.client.post('/login/', {'username': 'testuser@test.com', 'password': 'wrongpassword'})
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), 'Senha incorreta! Você tem mais 1 tentativas.')
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 4)
+
+        response = self.client.post('/login/', {'username': 'testuser@test.com', 'password': 'wrongpassword'})
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), 'Senha incorreta! Você tem mais 0 tentativas.')
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 5)
+
+        self.assertTrue(profile.is_blocked)
 
 
 class RegisterUserViewIntegrationTest(TestCase):
