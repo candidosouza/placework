@@ -1,11 +1,18 @@
-from datetime import timedelta
-from django.utils import timezone
 import uuid
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.test import TestCase
+from django.utils import timezone
 
-from placework.models import Address, Profile, EmailActivation, PasswordResetCode, PasswordHistory
+from placework.models import (
+    Address,
+    EmailActivation,
+    PasswordHistory,
+    PasswordResetCode,
+    Profile,
+)
 
 
 class ProfileModelTest(TestCase):
@@ -38,7 +45,7 @@ class ProfileModelTest(TestCase):
         profile = Profile.objects.get(user=self.user)
         field_label = profile._meta.get_field('cpf').verbose_name
         self.assertEqual(field_label, 'CPF')
-    
+
     def test_cnpj_label(self):
         profile = Profile.objects.get(user=self.user)
         field_label = profile._meta.get_field('cnpj').verbose_name
@@ -73,7 +80,18 @@ class ProfileModelTest(TestCase):
         fields_name = tuple(field.name for field in Profile._meta.fields)
         self.assertEqual(
             fields_name,
-            ('id', 'user', 'account_type', 'is_active', 'company_name', 'cpf', 'cnpj', 'error_login', 'is_blocked', 'reset_password')
+            (
+                'id',
+                'user',
+                'account_type',
+                'is_active',
+                'company_name',
+                'cpf',
+                'cnpj',
+                'error_login',
+                'is_blocked',
+                'reset_password',
+            ),
         )
 
         user_field: models.ForeignKey = Profile.user.field
@@ -255,7 +273,6 @@ class AddressModelTest(TestCase):
         self.assertTrue(state_field.editable)
         self.assertEqual(state_field.max_length, 2)
 
-
         zip_code_field: models.CharField = Address.zip_code.field
         self.assertIsInstance(zip_code_field, models.CharField)
         self.assertFalse(zip_code_field.null)
@@ -298,7 +315,9 @@ class EmailActivationModelTest(TestCase):
         self.assertEqual(str(email_activation), expected_str)
 
     def test_class__meta__(self):
-        self.assertEqual(str(EmailActivation._meta), 'placework.emailactivation')
+        self.assertEqual(
+            str(EmailActivation._meta), 'placework.emailactivation'
+        )
 
     def test_verbose_name(self):
         self.assertEqual(
@@ -313,7 +332,9 @@ class EmailActivationModelTest(TestCase):
         table_name = EmailActivation._meta.db_table
         self.assertEqual(table_name, 'placework_emailactivation')
 
-        fields_name = tuple(field.name for field in EmailActivation._meta.fields)
+        fields_name = tuple(
+            field.name for field in EmailActivation._meta.fields
+        )
         self.assertEqual(
             fields_name,
             ('id', 'user', 'token', 'expiration_time', 'created_at'),
@@ -332,14 +353,18 @@ class EmailActivationModelTest(TestCase):
         self.assertFalse(token_field.blank)
         self.assertIsNone(token_field.db_column)
 
-        expiration_time_field: models.DateTimeField = EmailActivation.expiration_time.field
+        expiration_time_field: models.DateTimeField = (
+            EmailActivation.expiration_time.field
+        )
         self.assertIsInstance(expiration_time_field, models.DateTimeField)
         self.assertFalse(expiration_time_field.null)
         self.assertFalse(expiration_time_field.blank)
         self.assertIsNone(expiration_time_field.db_column)
         self.assertTrue(expiration_time_field.editable)
 
-        created_at_field: models.DateTimeField = EmailActivation.created_at.field
+        created_at_field: models.DateTimeField = (
+            EmailActivation.created_at.field
+        )
         self.assertIsInstance(created_at_field, models.DateTimeField)
         self.assertFalse(created_at_field.null)
         self.assertTrue(created_at_field.blank)
@@ -387,7 +412,8 @@ class PasswordResetCodeModelTest(TestCase):
 
     def test_verbose_name(self):
         self.assertEqual(
-            str(PasswordResetCode._meta.verbose_name), 'Código de Redefinição de Senha'
+            str(PasswordResetCode._meta.verbose_name),
+            'Código de Redefinição de Senha',
         )
         self.assertEqual(
             str(PasswordResetCode._meta.verbose_name_plural),
@@ -398,7 +424,9 @@ class PasswordResetCodeModelTest(TestCase):
         table_name = PasswordResetCode._meta.db_table
         self.assertEqual(table_name, 'placework_passwordresetcode')
 
-        fields_name = tuple(field.name for field in PasswordResetCode._meta.fields)
+        fields_name = tuple(
+            field.name for field in PasswordResetCode._meta.fields
+        )
         self.assertEqual(
             fields_name,
             ('id', 'user', 'code', 'expiration_time', 'created_at'),
@@ -417,14 +445,18 @@ class PasswordResetCodeModelTest(TestCase):
         self.assertFalse(code_field.blank)
         self.assertIsNone(code_field.db_column)
 
-        expiration_time_field: models.DateTimeField = PasswordResetCode.expiration_time.field
+        expiration_time_field: models.DateTimeField = (
+            PasswordResetCode.expiration_time.field
+        )
         self.assertIsInstance(expiration_time_field, models.DateTimeField)
         self.assertFalse(expiration_time_field.null)
         self.assertFalse(expiration_time_field.blank)
         self.assertIsNone(expiration_time_field.db_column)
         self.assertTrue(expiration_time_field.editable)
 
-        created_at_field: models.DateTimeField = PasswordResetCode.created_at.field
+        created_at_field: models.DateTimeField = (
+            PasswordResetCode.created_at.field
+        )
         self.assertIsInstance(created_at_field, models.DateTimeField)
         self.assertFalse(created_at_field.null)
         self.assertTrue(created_at_field.blank)
@@ -476,7 +508,9 @@ class PasswordHistoryModelTest(TestCase):
         table_name = PasswordHistory._meta.db_table
         self.assertEqual(table_name, 'placework_passwordhistory')
 
-        fields_name = tuple(field.name for field in PasswordHistory._meta.fields)
+        fields_name = tuple(
+            field.name for field in PasswordHistory._meta.fields
+        )
         self.assertEqual(
             fields_name,
             ('id', 'user', 'hashed_password'),
@@ -489,12 +523,12 @@ class PasswordHistoryModelTest(TestCase):
         self.assertIsNone(user_field.db_column)
         self.assertTrue(user_field.editable)
 
-        hashed_password_field: models.CharField = PasswordHistory.hashed_password.field
+        hashed_password_field: models.CharField = (
+            PasswordHistory.hashed_password.field
+        )
         self.assertIsInstance(hashed_password_field, models.CharField)
         self.assertFalse(hashed_password_field.null)
         self.assertFalse(hashed_password_field.blank)
         self.assertIsNone(hashed_password_field.db_column)
         self.assertTrue(hashed_password_field.editable)
         self.assertEqual(hashed_password_field.max_length, 128)
-
-

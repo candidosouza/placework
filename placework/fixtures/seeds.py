@@ -1,8 +1,9 @@
 import random
+
 from django.contrib.auth.models import User
 from faker import Faker
-from placework.models import Profile, Address
 
+from placework.models import Address, Profile
 
 fake = Faker('pt_BR')
 

@@ -1,12 +1,14 @@
-from django.test import TestCase
 from unittest.mock import Mock
+
+from django.test import TestCase
+
 from placework.forms import (
-    RegisterForm,
     AddressForm,
     LoginForm,
-    UpdateForm,
+    PasswordResetConfirmForm,
     PasswordResetForm,
-    PasswordResetConfirmForm
+    RegisterForm,
+    UpdateForm,
 )
 
 
@@ -203,4 +205,3 @@ class PasswordResetConfirmFormTest(TestCase):
         }
         form = PasswordResetConfirmForm(data=form_data)
         self.assertTrue(form.is_valid())
-

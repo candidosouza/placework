@@ -1,16 +1,20 @@
 import re
 from datetime import timedelta
-from django.utils import timezone
-from django.urls import reverse
-from django.test import TestCase
-from django.contrib.auth.models import User
 
-from placework.models import Profile, Address, PasswordResetCode
+from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+
+from placework.models import Address, PasswordResetCode, Profile
 
 
 class HomeViewIntegrationTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.user = User.objects.create_user(
+            username='testuser', password='testpassword'
+        )
 
     def test_authenticated_user(self):
         self.client.login(username='testuser', password='testpassword')
@@ -29,10 +33,20 @@ class HomeViewIntegrationTest(TestCase):
 
 class LoginViewIntegrationTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.user = User.objects.create_user(
+            username='testuser@test.com', password='testpassword'
+        )
+        self.profile = Profile.objects.create(
+            user=self.user,
+            account_type='PF',
+            cpf='123.456.789-09',
+            is_active=True,
+        )
 
     def test_authenticated_user_redirect(self):
-        self.client.login(username='testuser', password='testpassword')
+        self.client.login(
+            username='testuser@test.com', password='testpassword'
+        )
         response = self.client.get('/login/')
         self.assertRedirects(response, '/')
 
@@ -48,22 +62,98 @@ class LoginViewIntegrationTest(TestCase):
     def test_unauthenticated_user_post_invalid(self):
         self.client.logout()
 
-        response = self.client.post('/login/', {'username': 'testuser', 'password': 'wrongpassword'})
+        response = self.client.post(
+            '/login/',
+            {'username': 'testuser@test.com', 'password': 'wrongpassword'},
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Email ou senha inválidos.')
 
     def test_unauthenticated_user_post_invalid(self):
         self.client.logout()
 
-        response = self.client.post('/login/', {'username': 'testuser', 'password': 'wrongpassword'})
+        response = self.client.post(
+            '/login/',
+            {'username': 'testuser@test.com', 'password': 'wrongpassword'},
+        )
         self.assertEqual(response.status_code, 200)
+
+    def test_checks_if_it_blocks_users_with_login_errors(self):
+        """verifica se bloqueia usuário com erros de login"""
+        self.client.logout()
+        response = self.client.post(
+            '/login/',
+            {'username': 'testuser@test.com', 'password': 'wrongpassword'},
+        )
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), 'Senha incorreta! Você tem mais 4 tentativas.'
+        )
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 1)
+
+        response = self.client.post(
+            '/login/',
+            {'username': 'testuser@test.com', 'password': 'wrongpassword'},
+        )
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), 'Senha incorreta! Você tem mais 3 tentativas.'
+        )
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 2)
+
+        response = self.client.post(
+            '/login/',
+            {'username': 'testuser@test.com', 'password': 'wrongpassword'},
+        )
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), 'Senha incorreta! Você tem mais 2 tentativas.'
+        )
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 3)
+
+        response = self.client.post(
+            '/login/',
+            {'username': 'testuser@test.com', 'password': 'wrongpassword'},
+        )
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]), 'Senha incorreta! Você tem mais 1 tentativas.'
+        )
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 4)
+
+        response = self.client.post(
+            '/login/',
+            {'username': 'testuser@test.com', 'password': 'wrongpassword'},
+        )
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(
+            str(messages[0]),
+            'Usuário bloqueado! Você errou a senha 5 vezes. Clique em "Esqueceu senha" para recuperar.',
+        )
+        profile = Profile.objects.get(user=self.user)
+        self.assertEqual(profile.error_login, 5)
+
+        self.assertTrue(profile.is_blocked)
 
 
 class RegisterUserViewIntegrationTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username='existinguser@example.com',
-            password='testpassword'
+            username='existinguser@example.com', password='testpassword'
         )
 
     def test_register_valid_user(self):
@@ -81,12 +171,14 @@ class RegisterUserViewIntegrationTest(TestCase):
             'neighborhood': 'Bairro',
             'city': 'Cidade',
             'state': 'SP',
-            'zip_code': '12345-678'
+            'zip_code': '12345-678',
         }
 
         response = self.client.post(reverse('register'), data)
         self.assertRedirects(response, reverse('home'))
-        self.assertTrue(User.objects.filter(username='newuser@example.com').exists())
+        self.assertTrue(
+            User.objects.filter(username='newuser@example.com').exists()
+        )
 
     def test_register_existing_user(self):
         """
@@ -103,7 +195,7 @@ class RegisterUserViewIntegrationTest(TestCase):
             'neighborhood': 'Bairro',
             'city': 'Cidade',
             'state': 'SP',
-            'zip_code': '12345-678'
+            'zip_code': '12345-678',
         }
 
         response = self.client.post(reverse('register'), data)
@@ -125,7 +217,7 @@ class RegisterUserViewIntegrationTest(TestCase):
             'neighborhood': 'Bairro Teste',
             'city': 'Cidade Teste',
             'state': 'SP',
-            'zip_code': '12345-678'
+            'zip_code': '12345-678',
         }
 
         response = self.client.post(reverse('register'), data)
@@ -147,15 +239,19 @@ class RegisterUserViewIntegrationTest(TestCase):
             'neighborhood': 'Bairro Teste',
             'city': 'Cidade Teste',
             'state': 'SP',
-            'zip_code': '98765-432'
+            'zip_code': '98765-432',
         }
 
         response = self.client.post(reverse('register'), data)
 
         user = User.objects.filter(username='newbusiness@example.com').first()
 
-        self.assertTrue(User.objects.filter(username='newbusiness@example.com').exists())
-        self.assertTrue(Profile.objects.filter(cnpj='96.093.720/0001-18').exists())
+        self.assertTrue(
+            User.objects.filter(username='newbusiness@example.com').exists()
+        )
+        self.assertTrue(
+            Profile.objects.filter(cnpj='96.093.720/0001-18').exists()
+        )
 
     def test_register_blank_fields(self):
         """
@@ -179,13 +275,27 @@ class RegisterUserViewIntegrationTest(TestCase):
 
         # print(response.context['form'].errors)
         self.assertEqual(response.status_code, 200)
-        self.assertFormError(response, 'form', 'username', 'Este campo é obrigatório.')
-        self.assertFormError(response, 'form', 'street', 'Este campo é obrigatório.')
-        self.assertFormError(response, 'form', 'number', 'Este campo é obrigatório.')
-        self.assertFormError(response, 'form', 'neighborhood', 'Este campo é obrigatório.')
-        self.assertFormError(response, 'form', 'city', 'Este campo é obrigatório.')
-        self.assertFormError(response, 'form', 'state', 'Este campo é obrigatório.')
-        self.assertFormError(response, 'form', 'zip_code', 'Este campo é obrigatório.')
+        self.assertFormError(
+            response, 'form', 'username', 'Este campo é obrigatório.'
+        )
+        self.assertFormError(
+            response, 'form', 'street', 'Este campo é obrigatório.'
+        )
+        self.assertFormError(
+            response, 'form', 'number', 'Este campo é obrigatório.'
+        )
+        self.assertFormError(
+            response, 'form', 'neighborhood', 'Este campo é obrigatório.'
+        )
+        self.assertFormError(
+            response, 'form', 'city', 'Este campo é obrigatório.'
+        )
+        self.assertFormError(
+            response, 'form', 'state', 'Este campo é obrigatório.'
+        )
+        self.assertFormError(
+            response, 'form', 'zip_code', 'Este campo é obrigatório.'
+        )
 
 
 class UpdateViewTestCase(TestCase):
@@ -200,12 +310,16 @@ class UpdateViewTestCase(TestCase):
             user=self.user,
             account_type='PF',
             cpf='123.456.789-09',
-            is_active=True
-            )
-        self.client.login(username='testuser@example.com', password='testpassword')
+            is_active=True,
+        )
+        self.client.login(
+            username='testuser@example.com', password='testpassword'
+        )
 
     def test_get_update_view(self):
-        response = self.client.get(f'/alteracao-dados/{self.user.pk}/', follow=True)
+        response = self.client.get(
+            f'/alteracao-dados/{self.user.pk}/', follow=True
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'placework/update.html')
         self.assertContains(response, 'ALTERAR DADOS CADASTRAIS')
@@ -227,26 +341,34 @@ class UpdateViewTestCase(TestCase):
             'name': '',
             'password': 'testpassword',
         }
-        response = self.client.post(f'/alteracao-dados/{self.user.pk}/', data, follow=True)
+        response = self.client.post(
+            f'/alteracao-dados/{self.user.pk}/', data, follow=True
+        )
 
         self.assertEqual(response.status_code, 200)
         data = {
             'name': 'Teste Update',
             'password': 'testpassword',
         }
-        response = self.client.post(f'/alteracao-dados/{self.user.pk}/', data, follow=True)
-        self.assertContains(response, 'A nova senha não pode corresponder a uma senha anterior.')
+        response = self.client.post(
+            f'/alteracao-dados/{self.user.pk}/', data, follow=True
+        )
+        self.assertContains(
+            response,
+            'A nova senha não pode corresponder a uma senha anterior.',
+        )
 
     def test_post_update_view_blank_name(self):
         data = {
             'name': '',
             'password': 'newpassword',
         }
-        response = self.client.post(f'/alteracao-dados/{self.user.pk}/', data, follow=True)
+        response = self.client.post(
+            f'/alteracao-dados/{self.user.pk}/', data, follow=True
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Dados Alterados com Sucesso!')
-
 
     def test_post_update_view_blank_password(self):
         data = {
@@ -291,7 +413,9 @@ class AddAddressViewTestCase(TestCase):
             username='testuser@example.com',
             password='testpassword',
         )
-        self.client.login(username='testuser@example.com', password='testpassword')
+        self.client.login(
+            username='testuser@example.com', password='testpassword'
+        )
 
     def test_get_add_address_view(self):
         response = self.client.get(f'/adicionar-endereco/{self.user.pk}/')
@@ -309,12 +433,16 @@ class AddAddressViewTestCase(TestCase):
             'state': 'SP',
             'zip_code': '12345-678',
         }
-        response = self.client.post(f'/adicionar-endereco/{self.user.pk}/', data)
+        response = self.client.post(
+            f'/adicionar-endereco/{self.user.pk}/', data
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('home'))
 
-        self.assertTrue(Address.objects.filter(user=self.user, street='Rua Teste').exists())
+        self.assertTrue(
+            Address.objects.filter(user=self.user, street='Rua Teste').exists()
+        )
 
     def test_post_add_address_view_invalid_data(self):
         data = {
@@ -326,11 +454,15 @@ class AddAddressViewTestCase(TestCase):
             'state': 'SP',
             'zip_code': '12345-678',
         }
-        response = self.client.post(f'/adicionar-endereco/{self.user.pk}/', data)
+        response = self.client.post(
+            f'/adicionar-endereco/{self.user.pk}/', data
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'placework/add_address.html')
-        self.assertFormError(response, 'form', 'number', 'Este campo é obrigatório.')
+        self.assertFormError(
+            response, 'form', 'number', 'Este campo é obrigatório.'
+        )
 
     def test_post_add_address_view_unauthenticated(self):
         self.client.logout()
@@ -343,10 +475,14 @@ class AddAddressViewTestCase(TestCase):
             'state': 'SP',
             'zip_code': '12345-678',
         }
-        response = self.client.post(f'/adicionar-endereco/{self.user.pk}/', data, follow=True)
+        response = self.client.post(
+            f'/adicionar-endereco/{self.user.pk}/', data, follow=True
+        )
 
         self.assertEqual(response.status_code, 200)
-        self.assertRedirects(response, f'/login/?next=/adicionar-endereco/{self.user.pk}/')
+        self.assertRedirects(
+            response, f'/login/?next=/adicionar-endereco/{self.user.pk}/'
+        )
 
 
 class CustomPasswordResetConfirmViewTestCase(TestCase):
@@ -359,7 +495,7 @@ class CustomPasswordResetConfirmViewTestCase(TestCase):
             user=self.user,
             account_type='PF',
             cpf='123.456.789-09',
-            is_active=True
+            is_active=True,
         )
         self.reset_code = PasswordResetCode.objects.create(
             user=self.user,
@@ -367,7 +503,9 @@ class CustomPasswordResetConfirmViewTestCase(TestCase):
         )
 
     def test_valid_reset_code(self):
-        response = self.client.get(f'/password_reset_confirm/{self.reset_code.code}', follow=True)
+        response = self.client.get(
+            f'/password_reset_confirm/{self.reset_code.code}', follow=True
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_invalid_reset_code(self):
@@ -379,15 +517,23 @@ class CustomPasswordResetConfirmViewTestCase(TestCase):
             user=self.user,
             expiration_time=timezone.now() - timedelta(hours=1),
         )
-        response = self.client.get(reverse('password_reset_confirm', kwargs={'uuid': str(expired_code.code)}))
+        response = self.client.get(
+            reverse(
+                'password_reset_confirm',
+                kwargs={'uuid': str(expired_code.code)},
+            )
+        )
         self.assertEqual(response.status_code, 302)
 
 
 class PasswordResetViewTest(TestCase):
-
     def setUp(self):
         self.reset_url = reverse('password_reset')
-        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='testpassword')
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpassword',
+        )
 
     def test_get_password_reset_page(self):
         response = self.client.get(self.reset_url)
@@ -398,11 +544,15 @@ class PasswordResetViewTest(TestCase):
         data = {'email': 'test@example.com'}
         response = self.client.post(self.reset_url, data)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Um e-mail com instruções de recuperação de senha foi enviado para o seu endereço de e-mail.')
+        self.assertContains(
+            response,
+            'Um e-mail com instruções de recuperação de senha foi enviado para o seu endereço de e-mail.',
+        )
 
     def test_invalid_password_reset_request(self):
         data = {'email': 'nonexistent@example.com'}
         response = self.client.post(self.reset_url, data, follow=True)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Não há usuário cadastrado com este e-mail.')
-
+        self.assertContains(
+            response, 'Não há usuário cadastrado com este e-mail.'
+        )
