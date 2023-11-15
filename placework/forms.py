@@ -1,9 +1,11 @@
 import re
 from typing import Any
+
 from django import forms
 from django.contrib.auth.models import User
-from validate_docbr import CPF, CNPJ
-from placework.models import Profile, Address
+from validate_docbr import CNPJ, CPF
+
+from placework.models import Address, Profile
 
 
 def validar_cpf(cpf):
@@ -24,11 +26,8 @@ class RegisterForm(forms.Form):
         max_length=254,
         required=True,
         widget=forms.EmailInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Email'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Email'}
+        ),
     )
     password = forms.CharField(
         label='Senha',
@@ -38,9 +37,9 @@ class RegisterForm(forms.Form):
             attrs={
                 'class': 'form-control',
                 'placeholder': 'Senha',
-                'autocomplete': 'current-password'
+                'autocomplete': 'current-password',
             }
-        )
+        ),
     )
 
     account_type = forms.ChoiceField(
@@ -48,22 +47,16 @@ class RegisterForm(forms.Form):
         choices=Profile.ACCOUNT_TYPE_CHOICES,
         required=True,
         widget=forms.Select(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Tipo de conta'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Tipo de conta'}
+        ),
     )
     name = forms.CharField(
         label='Nome',
         max_length=255,
         required=False,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome'
-            }
-        )   
+            attrs={'class': 'form-control', 'placeholder': 'Nome'}
+        ),
     )
 
     company_name = forms.CharField(
@@ -71,11 +64,8 @@ class RegisterForm(forms.Form):
         max_length=255,
         required=False,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome da empresa'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Nome da empresa'}
+        ),
     )
 
     cpf = forms.CharField(
@@ -83,12 +73,9 @@ class RegisterForm(forms.Form):
         max_length=14,
         required=False,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'CPF'
-            }
+            attrs={'class': 'form-control', 'placeholder': 'CPF'}
         ),
-        validators=[validar_cpf]
+        validators=[validar_cpf],
     )
 
     cnpj = forms.CharField(
@@ -96,12 +83,9 @@ class RegisterForm(forms.Form):
         max_length=18,
         required=False,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'CNPJ'
-            }
+            attrs={'class': 'form-control', 'placeholder': 'CNPJ'}
         ),
-        validators=[validar_cnpj]
+        validators=[validar_cnpj],
     )
 
     street = forms.CharField(
@@ -109,22 +93,16 @@ class RegisterForm(forms.Form):
         max_length=255,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Rua'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Rua'}
+        ),
     )
 
     number = forms.IntegerField(
         label='Número',
         required=True,
         widget=forms.NumberInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Número'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Número'}
+        ),
     )
 
     complement = forms.CharField(
@@ -132,11 +110,8 @@ class RegisterForm(forms.Form):
         max_length=255,
         required=False,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Complemento'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Complemento'}
+        ),
     )
 
     neighborhood = forms.CharField(
@@ -144,11 +119,8 @@ class RegisterForm(forms.Form):
         max_length=255,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Bairro'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Bairro'}
+        ),
     )
 
     city = forms.CharField(
@@ -156,11 +128,8 @@ class RegisterForm(forms.Form):
         max_length=255,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Cidade'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Cidade'}
+        ),
     )
 
     state = forms.CharField(
@@ -169,11 +138,8 @@ class RegisterForm(forms.Form):
         min_length=2,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Estado'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Estado'}
+        ),
     )
 
     zip_code = forms.CharField(
@@ -181,39 +147,39 @@ class RegisterForm(forms.Form):
         max_length=9,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'CEP'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'CEP'}
+        ),
     )
+
 
 class AddressForm(forms.ModelForm):
     class Meta:
         model = Address
-        fields = ['street', 'number', 'complement', 'neighborhood', 'city', 'state', 'zip_code']
-    
+        fields = [
+            'street',
+            'number',
+            'complement',
+            'neighborhood',
+            'city',
+            'state',
+            'zip_code',
+        ]
+
     street = forms.CharField(
         label='Rua',
         max_length=255,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Rua'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Rua'}
+        ),
     )
 
     number = forms.IntegerField(
         label='Número',
         required=True,
         widget=forms.NumberInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Número'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Número'}
+        ),
     )
 
     complement = forms.CharField(
@@ -221,11 +187,8 @@ class AddressForm(forms.ModelForm):
         max_length=255,
         required=False,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Complemento'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Complemento'}
+        ),
     )
 
     neighborhood = forms.CharField(
@@ -233,11 +196,8 @@ class AddressForm(forms.ModelForm):
         max_length=255,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Bairro'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Bairro'}
+        ),
     )
 
     city = forms.CharField(
@@ -245,11 +205,8 @@ class AddressForm(forms.ModelForm):
         max_length=255,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Cidade'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Cidade'}
+        ),
     )
 
     state = forms.CharField(
@@ -258,11 +215,8 @@ class AddressForm(forms.ModelForm):
         min_length=2,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Estado'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Estado'}
+        ),
     )
 
     zip_code = forms.CharField(
@@ -270,11 +224,8 @@ class AddressForm(forms.ModelForm):
         max_length=9,
         required=True,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'CEP'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'CEP'}
+        ),
     )
 
 
@@ -284,11 +235,8 @@ class LoginForm(forms.Form):
         max_length=254,
         required=True,
         widget=forms.EmailInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Email'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Email'}
+        ),
     )
     password = forms.CharField(
         label='Senha',
@@ -298,9 +246,9 @@ class LoginForm(forms.Form):
             attrs={
                 'class': 'form-control',
                 'placeholder': 'Senha',
-                'autocomplete': 'current-password'
+                'autocomplete': 'current-password',
             }
-        )
+        ),
     )
 
 
@@ -310,11 +258,8 @@ class UpdateForm(forms.Form):
         max_length=254,
         required=False,
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Nome'}
+        ),
     )
     password = forms.CharField(
         label='Alterar Senha (deixe em branco se não deseja alterar):',
@@ -324,10 +269,11 @@ class UpdateForm(forms.Form):
             attrs={
                 'class': 'form-control',
                 'placeholder': 'Senha',
-                'autocomplete': 'current-password'
+                'autocomplete': 'current-password',
             }
-        )
+        ),
     )
+
 
 class PasswordResetForm(forms.Form):
     email = forms.EmailField(
@@ -335,11 +281,8 @@ class PasswordResetForm(forms.Form):
         max_length=254,
         required=True,
         widget=forms.EmailInput(
-            attrs={
-                'class': 'form-control',
-                'placeholder': 'Email'
-            }
-        )
+            attrs={'class': 'form-control', 'placeholder': 'Email'}
+        ),
     )
 
     class Meta:
@@ -355,9 +298,9 @@ class PasswordResetConfirmForm(forms.Form):
             attrs={
                 'class': 'form-control',
                 'placeholder': 'Nova Senha',
-                'autocomplete': 'current-password'
+                'autocomplete': 'current-password',
             }
-        )
+        ),
     )
 
     class Meta:

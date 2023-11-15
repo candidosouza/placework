@@ -1,13 +1,15 @@
-import uuid
 import secrets
-import bcrypt
-from django.utils import timezone
+import uuid
 from datetime import timedelta
-from django.core.mail import send_mail,BadHeaderError
-from django.http import HttpResponse, HttpResponseRedirect
+
+import bcrypt
 from django.conf import settings
-from placework.models import PasswordResetCode, PasswordHistory
+from django.core.mail import BadHeaderError, send_mail
+from django.http import HttpResponse, HttpResponseRedirect
+from django.utils import timezone
+
 from common.utils import log
+from placework.models import PasswordHistory, PasswordResetCode
 
 
 def hash_password(password):
@@ -19,12 +21,16 @@ def hash_password(password):
 
 def check_password(password, hashed_password):
     # Verifique se a senha fornecida corresponde ao hash armazenado
-    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
+    return bcrypt.checkpw(
+        password.encode('utf-8'), hashed_password.encode('utf-8')
+    )
 
 
 def change_password(user, new_password):
     # Recupere as últimas 5 senhas do histórico do usuário
-    password_history = list(PasswordHistory.objects.filter(user=user).order_by('-id'))[:5]
+    password_history = list(
+        PasswordHistory.objects.filter(user=user).order_by('-id')
+    )[:5]
 
     # Verifique se a nova senha corresponde a uma das senhas no histórico
     for history_entry in password_history:
@@ -49,7 +55,9 @@ def generate_reset_code(user):
     # Gera um PasswordResetCode com código de redefinição de senha
     code = uuid.uuid4()
     expiration_time = timezone.now() + timedelta(hours=1)
-    reset_code = PasswordResetCode(user=user, code=code, expiration_time=expiration_time)
+    reset_code = PasswordResetCode(
+        user=user, code=code, expiration_time=expiration_time
+    )
     reset_code.save()
     return code
 
@@ -71,7 +79,13 @@ def send_password_email(user, code):
     recipient_list = [user.email]
     if subject and message and from_email:
         try:
-            send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+            send_mail(
+                subject,
+                message,
+                from_email,
+                recipient_list,
+                fail_silently=False,
+            )
         except Exception as e:
             log(str(e))
             print(str(e))
@@ -89,7 +103,9 @@ def send_reset_code_email(request, user, code):
     from_email = 'noreply@email.com'
     recipient_list = [user.email]
     try:
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        send_mail(
+            subject, message, from_email, recipient_list, fail_silently=False
+        )
         return True
     except Exception as e:
         log(str(e))
@@ -108,7 +124,9 @@ def send_register_code_email(request, user, code):
     from_email = 'noreply@email.com'
     recipient_list = [user.email]
     try:
-        send_mail(subject, message, from_email, recipient_list, fail_silently=False)
+        send_mail(
+            subject, message, from_email, recipient_list, fail_silently=False
+        )
         return True
     except Exception as e:
         log(str(e))

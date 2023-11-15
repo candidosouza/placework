@@ -30,7 +30,9 @@ class AdminTest(TestCase):
 
     def test_user_admin(self):
         self.client.login(username='testuser', password='testpassword')
-        response = self.client.get(f'/admin-placework/auth/user/{self.user.id}/change/')
+        response = self.client.get(
+            f'/admin-placework/auth/user/{self.user.id}/change/'
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Perfil')
@@ -47,5 +49,7 @@ class AdminTest(TestCase):
 
     def test_user_admin_search(self):
         self.client.login(username='testuser', password='testpassword')
-        response = self.client.get('/admin-placework/auth/user/', {'q': 'John Doe'})
+        response = self.client.get(
+            '/admin-placework/auth/user/', {'q': 'John Doe'}
+        )
         self.assertEqual(response.status_code, 200)

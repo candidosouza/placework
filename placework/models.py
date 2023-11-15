@@ -1,10 +1,11 @@
+import uuid
 from datetime import timedelta
-from django.utils import timezone
+
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from validate_docbr import CPF, CNPJ
-import uuid
+from django.utils import timezone
+from validate_docbr import CNPJ, CPF
 
 
 class Profile(models.Model):
@@ -26,12 +27,20 @@ class Profile(models.Model):
         verbose_name='Tipo de conta',
     )
     is_active = models.BooleanField(default=False, verbose_name='Ativo')
-    company_name = models.CharField(max_length=255, verbose_name='Nome da empresa', blank=True)
-    cpf = models.CharField(max_length=14, verbose_name='CPF', blank=True, null=True, unique=True)
-    cnpj = models.CharField(max_length=18, verbose_name='CNPJ', blank=True, null=True, unique=True)
+    company_name = models.CharField(
+        max_length=255, verbose_name='Nome da empresa', blank=True
+    )
+    cpf = models.CharField(
+        max_length=14, verbose_name='CPF', blank=True, null=True, unique=True
+    )
+    cnpj = models.CharField(
+        max_length=18, verbose_name='CNPJ', blank=True, null=True, unique=True
+    )
     error_login = models.IntegerField(default=0, verbose_name='Erros de login')
     is_blocked = models.BooleanField(default=False, verbose_name='Bloqueado')
-    reset_password = models.BooleanField(default=False, verbose_name='Redefinir senha')
+    reset_password = models.BooleanField(
+        default=False, verbose_name='Redefinir senha'
+    )
 
     def __str__(self):
         return f'{self.user.username}'
@@ -46,7 +55,7 @@ class Profile(models.Model):
             cnpj_validator = CNPJ()
             if not cnpj_validator.validate(self.cnpj):
                 raise ValidationError({'cnpj': 'CNPJ inválido.'})
-    
+
     class Meta:
         verbose_name = 'Perfil'
         verbose_name_plural = 'Perfis'
@@ -77,37 +86,44 @@ class Address(models.Model):
 class EmailActivation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    expiration_time = models.DateTimeField(default=timezone.now() + timedelta(days=1))
+    expiration_time = models.DateTimeField(
+        default=timezone.now() + timedelta(days=1)
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'user: {self.user.email}, token: {self.token}, expira em: {self.expiration_time}'
-    
+
     class Meta:
         verbose_name = 'Ativação de E-mail'
         verbose_name_plural = 'Ativações de E-mail'
 
+
 class PasswordResetCode(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_reset_code')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='user_reset_code'
+    )
     code = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     expiration_time = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'user: {self.user.email}, code: {self.code}, expira em: {self.expiration_time}'
-    
+
     class Meta:
         verbose_name = 'Código de Redefinição de Senha'
         verbose_name_plural = 'Códigos de Redefinição de Senha'
 
 
 class PasswordHistory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_history')
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='password_history'
+    )
     hashed_password = models.CharField(max_length=128)
 
     def __str__(self):
         return f'user: {self.user.email}, pass: {self.hashed_password}'
-    
+
     class Meta:
         verbose_name = 'Histórico de Senhas'
         verbose_name_plural = 'Históricos de Senhas'
